@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fun Lab Reports</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f7fb; --card:#ffffff; --ink:#1b2333; --muted:#5a6476; --line:#d8dee9; --soft:#eef3f8;
+  --accent:#1f7a8c; --accent-ink:#ffffff; --sun:#f2a541; --berry:#c2457a; --leaf:#3a9a5b;
+  --ok:#1e8e4f; --warn:#a96300; --bad:#b3261e; --hl:#fff1c2; --focus:#f2a541;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#131823; --card:#1c2231; --ink:#e7ecf4; --muted:#a4aec0; --line:#313a4e; --soft:#232b3d;
+    --accent:#5cc2d4; --accent-ink:#0f1a22; --sun:#f2b05e; --berry:#e57aa6; --leaf:#6cc98b;
+    --ok:#5bd08d; --warn:#f0b35a; --bad:#ff8a80; --hl:#4a3f12; --focus:#f2b05e;
+  }
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:18px/1.55 "Atkinson Hyperlegible",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.topbar{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--line)}
+.topbar .in{max-width:1180px;margin:0 auto;padding:8px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:1.1rem;text-decoration:none;color:var(--ink)}
+.brand .flask{font-size:1.5rem}
+.spacer{flex:1}
+.savechip{font-size:.85rem;color:var(--muted)}
+main{max-width:1180px;margin:0 auto;padding:18px 16px 90px}
+h1{font-size:1.6rem;margin:6px 0 4px;line-height:1.25}
+h2{font-size:1.2rem;margin:0 0 8px}
+h3{font-size:1.05rem;margin:0 0 6px}
+p{margin:6px 0}
+.muted{color:var(--muted)}
+.small{font-size:.9rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin:14px 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:12px;padding:10px 16px;min-height:44px;background:var(--accent);color:var(--accent-ink);font-weight:700;cursor:pointer;text-decoration:none}
+.btn.secondary{background:transparent;color:var(--accent);border:2px solid var(--accent)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:600}
+.btn.small{min-height:36px;padding:6px 12px;font-size:.92rem}
+.btn.danger{background:var(--bad);color:#fff}
+.btn:disabled{opacity:.5;cursor:default}
+.say{border:0;background:var(--soft);border-radius:10px;min-width:40px;min-height:40px;cursor:pointer;font-size:1.05rem;flex:none}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.mod{display:flex;flex-direction:column;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;text-decoration:none;color:var(--ink);min-height:120px}
+.mod:hover{border-color:var(--accent)}
+.mod .num{font-size:.85rem;font-weight:700;color:var(--berry);letter-spacing:.04em;text-transform:uppercase}
+.mod .t{font-weight:700;font-size:1.05rem;line-height:1.3}
+.mod.now{border:2px solid var(--sun)}
+.bar{height:8px;background:var(--soft);border-radius:99px;overflow:hidden;margin-top:auto}
+.bar span{display:block;height:100%;background:var(--leaf)}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.82rem;font-weight:700;white-space:nowrap}
+.pill.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.pill.warn{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.pill.info{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}
+.pill.grey{background:var(--soft);color:var(--muted)}
+.pill.tag{background:color-mix(in srgb,var(--berry) 14%,transparent);color:var(--berry)}
+.labrow{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--line)}
+.labrow:first-of-type{border-top:0}
+.labrow .lt{flex:1 1 260px}
+.labrow .lt b{font-size:1.02rem}
+.check{display:flex;gap:10px;align-items:flex-start;padding:6px 0}
+.check input{width:22px;height:22px;margin-top:3px;flex:none}
+.cols{display:grid;grid-template-columns:1fr;gap:14px}
+@media (min-width:960px){.cols{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}}
+.sect{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:14px}
+.sect .head{display:flex;gap:8px;align-items:center;margin-bottom:4px}
+.sect .head h3{margin:0;flex:1}
+textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg);resize:vertical;line-height:1.5}
+input[type=text],input[type=date],input[type=password],input[type=number],select{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg);min-height:44px;max-width:100%}
+.hints{margin:6px 0 0;padding:0;list-style:none}
+.hints li{font-size:.9rem;color:var(--warn);padding:2px 0}
+.hints li::before{content:"💡 "}
+.speaking{background:var(--hl)!important;border-radius:8px}
+.safety{border:2px solid var(--sun);background:color-mix(in srgb,var(--sun) 9%,var(--card))}
+.safety ul{margin:6px 0;padding-left:20px}
+.hz{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;transform:rotate(45deg);border:3px solid var(--bad);border-radius:4px;margin-right:10px;flex:none}
+.hz span{transform:rotate(-45deg);font-size:.9rem}
+table.dt{border-collapse:collapse;width:100%;font-size:.95rem}
+table.dt th,table.dt td{border:1px solid var(--line);padding:4px}
+table.dt input{width:100%;min-width:60px;min-height:36px;border:0;background:transparent;padding:4px 6px}
+table.dt th input{font-weight:700}
+.tablewrap{overflow-x:auto}
+.unit{font-size:.82rem;min-height:32px!important;padding:2px 4px!important;width:100%}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.photo{border:1px solid var(--line);border-radius:12px;padding:6px;background:var(--bg)}
+.photo img{width:100%;height:110px;object-fit:cover;border-radius:8px;display:block}
+.photo input{width:100%;min-height:34px;margin-top:4px;font-size:.85rem}
+svg.graph{width:100%;height:auto;background:var(--bg);border:1px solid var(--line);border-radius:12px}
+.modal{position:fixed;inset:0;background:rgba(10,14,22,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal .box{background:var(--card);border-radius:18px;max-width:520px;width:100%;padding:18px 20px;max-height:90vh;overflow:auto}
+.stopbar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:40}
+.toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;z-index:60;font-weight:700}
+.report{background:#fff;color:#111;border-radius:12px;padding:28px 32px;font-family:Georgia,"Times New Roman",serif;line-height:1.55;max-width:820px;margin:0 auto;border:1px solid var(--line)}
+.report h1{font-family:inherit;font-size:1.5rem;margin:0 0 4px}
+.report h2{font-family:inherit;font-size:1.1rem;margin:18px 0 4px;border-bottom:1px solid #ccc;padding-bottom:2px}
+.report .meta{color:#444;font-size:.95rem}
+.report table{border-collapse:collapse;margin:8px 0}
+.report th,.report td{border:1px solid #999;padding:4px 8px;text-align:left}
+.report img{max-width:48%;margin:4px 1% 4px 0;border:1px solid #ccc}
+.report figure{display:inline-block;width:48%;margin:4px 1% 4px 0;vertical-align:top}
+.report figure img{max-width:100%;width:100%}
+.report figcaption{font-size:.85rem;color:#444}
+.report .p{white-space:pre-wrap}
+.report .comment{border-left:4px solid #1f7a8c;background:#f1f7f9;padding:8px 12px;margin-top:16px}
+.report.para p.speaking{background:#fff1c2}
+.pf-break{page-break-before:always;break-before:page}
+footer.ver{max-width:1180px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font-size:.85rem}
+@media print{
+  body{background:#fff}
+  .topbar,.noprint,footer.ver,.stopbar,.toast{display:none!important}
+  main{padding:0;max-width:none}
+  .report{border:0;padding:0;max-width:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="topbar noprint">
+  <div class="in">
+    <a class="brand" href="#home"><span class="flask" aria-hidden="true">🧪</span>Fun Lab Reports</a>
+    <span class="spacer"></span>
+    <span class="savechip" id="saveChip" aria-live="polite"></span>
+    <button class="btn ghost small" data-action="voicePanel" aria-label="Reading voice settings">🔊 Voice</button>
+    <a class="btn ghost small" href="#teacher">Home teacher</a>
+  </div>
+</div>
+<main id="app" aria-live="polite"></main>
+<footer class="ver noprint">Fun Lab Reports v0.1 · Apologia Physical Science 4th Ed. · Saskatchewan Science 9 · Your work stays on this computer.</footer>
+<div class="stopbar noprint" id="stopbar" hidden><button class="btn" data-action="stopSpeak">■ Stop reading</button></div>
+<div id="modalRoot"></div>
+
+<script>
+(function(){
+"use strict";
+var APP_VERSION = "0.1";
+
+/* ===================== Course data ===================== */
+var OUTCOMES = {
+  "AE9.1":"Tell physical properties from chemical properties of common substances (household, commercial, industrial, agricultural).",
+  "AE9.2":"Analyze historical models of the atom: Dalton, Thomson, Rutherford, and Bohr.",
+  "AE9.3":"Classify pure substances as elements or compounds, and understand how the periodic table was developed.",
+  "CE9.1":"Static charge and current electricity, including historical and cultural understanding.",
+  "CE9.2":"How voltage, current, and resistance relate in series and parallel circuits.",
+  "CE9.3":"How electrical devices work, what they cost to run, and how efficient they are.",
+  "CE9.4":"Impacts of past, current, and future electricity production and distribution in Saskatchewan."
+};
+var MODULES = [
+  {n:1,title:"Science—The Basics",
+    bags:[{name:"Module 1 bag",items:["Digital scale","Magnifier","Effervescent antacid tablets (2)","Small eraser","Stirring rod (15 cm)"]}],
+    provide:["Water"]},
+  {n:2,title:"Properties and States of Matter",
+    bags:[{name:"Bag 2A",items:["Cooking oil (about 240 mL)","Corks (4)","Corn syrup (about 160 mL)","Food colouring","Isopropyl (rubbing) alcohol (about 160 mL)","Measuring cup (250 mL)","Small marbles (4)","Small paper clips","Washers (4)","Wide-mouth jar (about 1 L)"]},
+          {name:"Bag 2B",items:["Baking soda (about 60 mL)","9-volt battery","Electrical tape","Insulated wires (2, about 23 cm each)"]}],
+    provide:["Phone timer","Grapes","Ice cubes","Pennies (Canada stopped making them in 2013, so check a coin jar)","Water"],
+    safety:{hz:["🔥"],items:["Rubbing alcohol is flammable. Keep it far away from candles, the stove, and any flame.","Use only the 9-volt battery from the kit. A bigger battery could be dangerous.","Never let the two battery wires touch each other. The wires can get hot.","Wear safety goggles for every experiment in this module."]}},
+  {n:3,title:"Atomic Structure and the Periodic Table",bags:[],provide:[],note:"Module 3 has no kit bag. It doesn't need extra supplies."},
+  {n:4,title:"Chemical Bonds",
+    bags:[{name:"Module 4 bag",items:["Small balloon","Dish soap (10 mL)","Large straw","Microscope slides (2)","Plastic pipette (1 mL)","Styrofoam cup (300 mL)","Toothpicks (5)"]}],
+    provide:["Butter","Edibles (see your textbook)","Glass","Ice cubes","Knife","Microwave","Pen","Spoon","Toilet paper","Water"],
+    safety:{hz:["⚠️"],items:["Ask an adult before using the knife or microwave.","Don't eat anything used in an experiment unless the textbook says it's food-safe."]}},
+  {n:5,title:"Reactions and Energy",
+    bags:[{name:"Bag 5A",items:["9-volt battery","Epsom salt (about 120 mL)","Masking tape","Modelling clay","Plastic test tubes (2)"]},
+          {name:"Bag 5B",items:["Dish soap (about 60 mL)","Hydrogen peroxide (about 240 mL)","Salt substitute (15 mL)","Steel wool","Styrofoam packing peanut","Yeast (30 mL)"]}],
+    provide:["Deep bowl","Kitchen knives","Tablespoon","Water","Phone timer","Nail polish remover","Old tray","Spoon"],
+    safety:{hz:["🔥","⚠️"],items:["Nail polish remover is flammable and has strong fumes. Open a window and keep it away from flames.","Hydrogen peroxide can irritate skin and eyes. Wear goggles and rinse any spills with water.","Never let the battery wires touch each other.","Do the experiments on the old tray in case of spills."]}},
+  {n:6,title:"Motion",bags:[{name:"Module 6 bag",items:["Measuring tape"]}],provide:["Books","Phone timer","Cookie sheet","Eggs","Kitchen table"]},
+  {n:7,title:"Forces",
+    bags:[{name:"Module 7 bag",items:["Aluminum pie pan (20 cm)","Large balloons","Clear tape","Foil (30 cm)","Index cards (2)","Unsharpened pencils (4)","Rubber stopper","Large straw","White cotton string (3 m)"]}],
+    provide:["2 L bottle","Books","Eggs","A coin (the kit list says nickel)","Small piece of paper"]},
+  {n:8,title:"Energy",bags:[{name:"Module 8 bag",items:["Tennis ball","Large rubber bands (4)"]}],provide:["Baseball or soccer ball","Shovel"]},
+  {n:9,title:"Waves and Sound",
+    bags:[{name:"Module 9 bag",items:["Large balloon","Matchbook","Rice (15 mL)","Small rubber bands","Tealight candle"]}],
+    provide:["Bowl","Glass bottle","Plastic tub","Plastic wrap","Pot","Water","Wooden spoon"],
+    safety:{hz:["🔥"],items:["An adult should light the candle. Tie back long hair and keep paper away from the flame.","Blow out the candle as soon as the experiment is done."]}},
+  {n:10,title:"Light",
+    bags:[{name:"Module 10 bag",items:["CD","Dishcloths (2)","Flashlight","Red marker","Mirror (10 × 15 cm)","Protractor","Black dry-erase marker"]}],
+    provide:["Baking dish","Bowl","Phone timer","Glass","A quarter","Sunny window","Water"],
+    safety:{hz:["⚠️"],items:["Never look straight at the sun, even with a mirror or CD."]}},
+  {n:11,title:"Electricity and Magnetism",
+    bags:[{name:"Module 11 bag",items:["Large balloon","AA battery","Foil (30 cm)","Insulated wire (60 cm)","Nail (7.5 cm)","Large paper clips (2)","Plastic lid"]}],
+    provide:["Canvas gloves (optional)","Clear glass","Pliers"],
+    safety:{hz:["⚡"],items:["Use only the kit battery. Never connect anything to a wall outlet.","A wire connected straight across a battery gets hot quickly. Disconnect it after a few seconds."]}},
+  {n:12,title:"Our Earth",
+    bags:[{name:"Module 12 bag",items:["Cornstarch (about 450 g box)","Pumice","Table salt (about 60 mL)","Zip bags (2)"]}],
+    provide:["Bowl","Eggs","Ice cubes","Potholders","Pen","Saucepan","Shallow pan","Stirring spoon","Tablespoon","Water"],
+    safety:{hz:["♨️"],items:["Use potholders with hot pans and boiling water. An adult should be nearby when the stove is on."]}},
+  {n:13,title:"Our Atmosphere and Beyond",
+    bags:[{name:"Module 13 bag",items:["Large balloon","Small rubber band"]}],
+    provide:["1 L water bottle","Supplies for Experiment 13.2 (see your textbook)","Ice cubes","Plastic cup","Sink","Teaspoon","Water"]},
+  {n:14,title:"Chemistry and Physics in the Life Sciences",
+    bags:[{name:"Module 14 bag",items:["Dropper","Ping-pong ball","Plastic cups (7)","Vitamin C tablet (1000 mg)"]}],
+    provide:["Tincture of iodine (NOT in the kit; buy it ahead at a pharmacy, it may need a special order)","Edibles (see your textbook)","Plastic wrap","Supplies listed in your textbook","Teaspoon","Water"],
+    safety:{hz:["☠️"],items:["Iodine is poisonous if swallowed and stains skin and clothes. Wear goggles and old clothes.","Food used with iodine is NOT safe to eat afterward."]}},
+  {n:15,title:"Physical Science Research",bags:[],provide:[],note:"Supplies depend on the research project you choose."}
+];
+var LOOSE = ["Beakers (250 mL, 4)","Thermometer","Funnel","Safety goggles","Paper towels","Vinegar (about 1 L)"];
+var BUILTIN_LABS = [
+  {id:"1.1",m:1,title:"Making Observations",tags:[]},
+  {id:"1.2",m:1,title:"Practice Collecting and Analyzing Data",tags:[]},
+  {id:"2.1",m:2,title:"Diffusion at Different Temperatures",tags:[]},
+  {id:"2.2",m:2,title:"Exploring Different Densities",tags:["AE9.1"],calc:"density"},
+  {id:"2.Y1",m:2,ord:2.5,title:"You Do Science: Volume and Density Change Activity",tags:["AE9.1"],optional:true,calc:"density"},
+  {id:"2.3",m:2,title:"Changes in Matter",tags:["AE9.1"]},
+  {id:"3.1",m:3,title:"Exploring the Plum Pudding and Bohr Models of the Atom",tags:["AE9.2"]},
+  {id:"3.2",m:3,title:"Creating a Periodic Table: Mendeleev's Challenge (Advanced Concepts)",tags:["AE9.3"],optional:true}
+];
+var SECTIONS = {
+  purpose:{label:"Purpose",help:"In one sentence, what is this experiment trying to find out or show?"},
+  hypothesis:{label:"Hypothesis",help:"What do you predict will happen, and why? An if… then… sentence works well."},
+  materials:{label:"Materials",help:"List what was used. Use metric amounts: mL, g, cm, °C."},
+  procedure:{label:"Procedure",help:"Describe what was done, in past tense, without I or we. Example: Three drops of food colouring were added to the hot water."},
+  data:{label:"Data and Observations",help:"Record what was measured and what was seen. Put numbers in the table, and add photos or drawings."},
+  results:{label:"Results",help:"What do the data show? Point to a pattern in the table or graph."},
+  conclusion:{label:"Conclusion",help:"Answer the purpose: what was learned? Was the hypothesis supported? Name one source of error."}
+};
+var SHORT = ["data","conclusion"];
+var FULL = ["purpose","hypothesis","materials","procedure","data","results","conclusion"];
+var UNITS = ["","g","kg","mg","mL","L","cm³","cm","mm","m","km","s","min","h","°C","g/mL","g/cm³","m/s","N","J","W","V","A","Ω","drops","count"];
+
+/* ===================== Helpers ===================== */
+function $(s,r){ return (r||document).querySelector(s); }
+function $all(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+function todayISO(){ var d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); }
+function fmtDate(iso){ if(!iso) return ""; var p=iso.split("-"); var d=new Date(+p[0],+p[1]-1,+p[2]); return d.toLocaleDateString("en-CA",{year:"numeric",month:"long",day:"numeric"}); }
+function monthKey(iso){ return iso ? iso.slice(0,7) : ""; }
+function monthName(k){ var p=k.split("-"); return new Date(+p[0],+p[1]-1,1).toLocaleDateString("en-CA",{year:"numeric",month:"long"}); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function toast(msg){ var t=document.createElement("div"); t.className="toast"; t.setAttribute("role","status"); t.textContent=msg; document.body.appendChild(t); setTimeout(function(){ t.remove(); },2200); }
+function num(v){ if(v==null) return NaN; var s=String(v).trim().replace(",","."); if(!/^-?\d*\.?\d+(e-?\d+)?$/i.test(s)) return NaN; return parseFloat(s); }
+
+/* ===================== Storage (IndexedDB) ===================== */
+var DBN="fun-lab-reports", db=null, data=null;
+function openDB(){
+  return new Promise(function(res,rej){
+    var r=indexedDB.open(DBN,1);
+    r.onupgradeneeded=function(){ var d=r.result; if(!d.objectStoreNames.contains("kv")) d.createObjectStore("kv"); if(!d.objectStoreNames.contains("photos")) d.createObjectStore("photos"); };
+    r.onsuccess=function(){ res(r.result); }; r.onerror=function(){ rej(r.error); };
+  });
+}
+function idbGet(store,key){ return new Promise(function(res,rej){ var t=db.transaction(store,"readonly"), q=t.objectStore(store).get(key); q.onsuccess=function(){res(q.result);}; q.onerror=function(){rej(q.error);}; }); }
+function idbPut(store,key,val){ return new Promise(function(res,rej){ var t=db.transaction(store,"readwrite"); t.objectStore(store).put(val,key); t.oncomplete=function(){res();}; t.onerror=function(){rej(t.error);}; t.onabort=function(){rej(t.error);}; }); }
+function idbDel(store,key){ return new Promise(function(res){ var t=db.transaction(store,"readwrite"); t.objectStore(store).delete(key); t.oncomplete=function(){res();}; t.onerror=function(){res();}; }); }
+function idbAllKeys(store){ return new Promise(function(res,rej){ var t=db.transaction(store,"readonly"), q=t.objectStore(store).getAllKeys(); q.onsuccess=function(){res(q.result||[]);}; q.onerror=function(){rej(q.error);}; }); }
+function idbClear(store){ return new Promise(function(res){ var t=db.transaction(store,"readwrite"); t.objectStore(store).clear(); t.oncomplete=function(){res();}; }); }
+
+function fresh(){ return {v:1,app:"fun-lab-reports",created:Date.now(),student:"",settings:{length:"short",rate:1,voice:"",highlight:true,pin:""},
+  labs:{},custom:[],tagEdits:{},checklist:{},lastBackup:0,lastLab:""}; }
+function migrate(d){
+  if(!d || typeof d!=="object") return fresh();
+  var f=fresh();
+  Object.keys(f).forEach(function(k){ if(d[k]===undefined) d[k]=f[k]; });
+  Object.keys(f.settings).forEach(function(k){ if(d.settings[k]===undefined) d.settings[k]=f.settings[k]; });
+  d.v=1; return d;
+}
+var saveTimer=null;
+function save(now){
+  $("#saveChip").textContent="Saving…";
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(function(){
+    idbPut("kv","data",data).then(function(){ $("#saveChip").textContent="✓ Saved"; })
+      .catch(function(){ $("#saveChip").textContent="⚠️ Not saved. Make a backup."; });
+  }, now?0:500);
+}
+function flush(){ if(saveTimer){ clearTimeout(saveTimer); saveTimer=null; return idbPut("kv","data",data); } return Promise.resolve(); }
+window.addEventListener("pagehide",function(){ if(saveTimer){ clearTimeout(saveTimer); try{ idbPut("kv","data",data); }catch(e){} } });
+document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="hidden") flush(); });
+
+/* photos */
+var urlCache={};
+function photoURL(id){
+  if(urlCache[id]) return Promise.resolve(urlCache[id]);
+  return idbGet("photos",id).then(function(rec){ if(!rec||!rec.blob) return ""; urlCache[id]=URL.createObjectURL(rec.blob); return urlCache[id]; });
+}
+function fillPhotos(root){
+  $all("img[data-photo]",root||document).forEach(function(img){
+    photoURL(img.getAttribute("data-photo")).then(function(u){ if(u) img.src=u; else img.alt="(photo missing)"; });
+  });
+}
+function shrink(file){
+  return new Promise(function(res,rej){
+    var img=new Image(), u=URL.createObjectURL(file);
+    img.onload=function(){ var max=1400,w=img.naturalWidth,h=img.naturalHeight,k=Math.min(1,max/Math.max(w,h));
+      var c=document.createElement("canvas"); c.width=Math.round(w*k); c.height=Math.round(h*k);
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(u);
+      c.toBlob(function(b){ b?res(b):rej(new Error("Couldn't shrink the photo.")); },"image/jpeg",0.8); };
+    img.onerror=function(){ URL.revokeObjectURL(u); rej(new Error("That file isn't a picture this browser can open. Try a JPEG or PNG.")); };
+    img.src=u;
+  });
+}
+function addPhotoFromFile(file){
+  return shrink(file).then(function(blob){ var id="ph_"+uid(); return idbPut("photos",id,{blob:blob,t:Date.now()}).then(function(){ return id; }); });
+}
+
+/* ===================== Labs ===================== */
+function allLabs(){
+  var list=BUILTIN_LABS.map(function(l){ return {id:l.id,m:l.m,ord:l.ord,title:l.title,tags:(data.tagEdits[l.id]||l.tags).slice(),optional:!!l.optional,calc:l.calc,builtin:true}; });
+  data.custom.forEach(function(c){ list.push({id:c.id,m:c.m,title:c.title,tags:(data.tagEdits[c.id]||c.tags||[]).slice(),optional:!!c.optional,custom:true}); });
+  list.sort(function(a,b){ return a.m-b.m || ordOf(a)-ordOf(b) || cmpId(a.id,b.id); });
+  return list;
+}
+function ordOf(l){ if(l.ord) return l.ord; var x=parseFloat(l.id.split(".")[1]); return isNaN(x)?50:x; }
+function cmpId(a,b){ var pa=a.split("."),pb=b.split("."); var x=parseFloat(pa[1]),y=parseFloat(pb[1]); if(isNaN(x)) x=50; if(isNaN(y)) y=50; if(x!==y) return x-y; return a<b?-1:a>b?1:0; }
+function labName(l){ return (l.id.indexOf(".Y")>0?"":"Experiment "+l.id+": ")+l.title; }
+function labDef(id){ var l=allLabs().filter(function(x){return x.id===id;}); return l[0]||null; }
+function rec(id){ if(!data.labs[id]) data.labs[id]={status:"not",date:"",sections:{},table:null,graph:{x:0,y:1,type:"line"},photos:[],calc:{},comment:"",reviewed:false,finished:"",elsewhere:null}; return data.labs[id]; }
+function hasRec(id){ return !!data.labs[id]; }
+function statusOf(id){ return hasRec(id)?data.labs[id].status:"not"; }
+function statusPill(s,r){
+  if(s==="finished") return '<span class="pill ok">'+(r&&r.reviewed?"✓ Reviewed":"Finished")+'</span>';
+  if(s==="elsewhere") return '<span class="pill ok">Done in notebook</span>';
+  if(s==="progress") return '<span class="pill info">In progress</span>';
+  return '<span class="pill grey">Not started</span>';
+}
+function isDone(s){ return s==="finished"||s==="elsewhere"; }
+function sectionsFor(){ return data.settings.length==="full"?FULL:SHORT; }
+function currentModule(){
+  var labs=allLabs(), best=0;
+  labs.forEach(function(l){ var s=statusOf(l.id); if(s!=="not" && l.m>best) best=l.m; });
+  return best||1;
+}
+
+/* ===================== Writing coach ===================== */
+var SLANG=["cool","awesome","super","kinda","sorta","gonna","wanna","stuff","lol","totally","pretty much","a lot","crazy","weird","basically","like,"];
+var IMPER=["add","pour","put","place","mix","stir","measure","fill","wait","take","record","drop","heat","cut","weigh","observe","use","set","fold","tape","connect","stretch","roll","shake","let","get","make","label"];
+function coach(key,text){
+  var t=(text||"").trim(), out=[];
+  if(!t) return out;
+  var pron=t.match(/\b(I|I'm|I've|we|we're|my|our|us|me|you|your)\b/g);
+  if(pron && key!=="hypothesis"){ out.push("Lab reports don't use "+Array.from(new Set(pron)).slice(0,3).map(function(w){return '"'+w+'"';}).join(", ")+". Try: \"The water was measured…\" instead of \"I measured…\""); }
+  var low=" "+t.toLowerCase()+" ", slang=SLANG.filter(function(w){ return low.indexOf(" "+w+" ")>=0 || low.indexOf(" "+w+".")>=0 || low.indexOf(" "+w+",")>=0 || (w.slice(-1)==="," && low.indexOf(" "+w)>=0); });
+  if(slang.length) out.push("Swap casual words ("+slang.slice(0,3).map(function(w){return '"'+w.replace(/,$/,"")+'"';}).join(", ")+") for exact scientific words.");
+  if(key==="procedure"){
+    var sentences=t.split(/[.!?]\s+|\n+/), bad=sentences.filter(function(s){ var w=s.trim().split(/\s+/)[0]; return w && IMPER.indexOf(w.toLowerCase().replace(/[^a-z]/g,""))>=0; });
+    if(bad.length) out.push("Write the procedure in past tense, as what was done. \""+bad[0].trim().slice(0,40)+"…\" could become \"…was added\" or \"…was measured.\"");
+  }
+  if(key==="conclusion"){
+    if(!/error|mistake|inaccura|uncertain|could have|might have|may have|imprecise|estimate/i.test(t)) out.push("Add one possible source of error, and how it could have changed the results.");
+    if(t.length<80) out.push("A conclusion is usually 3 or more sentences: what was learned, whether the hypothesis was supported, and a source of error.");
+  }
+  if(key==="hypothesis" && !/\bif\b|\bwill\b|predict|expect/i.test(t)) out.push("A hypothesis makes a prediction. Try an if… then… sentence.");
+  if((key==="materials"||key==="data") && /\b(\d+(\.\d+)?)\s*(oz|ounces?|inch(es)?|in\.|cups?|tsp|tbsp|°F|fahrenheit|pounds?|lbs?|feet|foot|ft)\b/i.test(t)) out.push("Use metric units: mL, L, g, cm, °C.");
+  return out;
+}
+
+/* ===================== Read-aloud ===================== */
+var synth=window.speechSynthesis||null, speakingEl=null, speakQueue=[], speakOn=false;
+function voices(){ if(!synth) return []; return synth.getVoices().filter(function(v){ return /^en/i.test(v.lang); }); }
+function pickVoice(){
+  var vs=voices(); if(!vs.length) return null;
+  if(data && data.settings.voice){ var m=vs.filter(function(v){return v.name===data.settings.voice;}); if(m.length) return m[0]; }
+  var order=[/en-CA/i,/en-US/i,/en-GB/i,/^en/i];
+  for(var i=0;i<order.length;i++){ for(var j=0;j<vs.length;j++){ if(order[i].test(vs[j].lang)) return vs[j]; } }
+  return vs[0];
+}
+function stopSpeak(){
+  speakOn=false; speakQueue=[]; if(synth) synth.cancel();
+  $all(".speaking").forEach(function(e){ e.classList.remove("speaking"); });
+  $("#stopbar").hidden=true;
+}
+// items: [{text, el}]
+function speakItems(items){
+  if(!synth){ toast("Read-aloud isn't available in this browser."); return; }
+  stopSpeak(); speakOn=true; $("#stopbar").hidden=false;
+  speakQueue=[];
+  items.forEach(function(it){ var parts=(it.text||"").replace(/\s+/g," ").match(/[^.!?]+[.!?]*\s*/g)||[]; parts.forEach(function(p){ if(p.trim()) speakQueue.push({text:p.trim(),el:it.el}); }); });
+  var v=pickVoice();
+  (function next(){
+    $all(".speaking").forEach(function(e){ e.classList.remove("speaking"); });
+    if(!speakOn || !speakQueue.length){ stopSpeak(); return; }
+    var it=speakQueue.shift(), u=new SpeechSynthesisUtterance(it.text);
+    if(v){ u.voice=v; u.lang=v.lang; } else u.lang="en-CA";
+    u.rate=+data.settings.rate||1;
+    u.onstart=function(){ if(it.el && data.settings.highlight) it.el.classList.add("speaking"); };
+    u.onend=next; u.onerror=function(){ stopSpeak(); };
+    synth.speak(u);
+  })();
+}
+function sayText(text,el){ speakItems([{text:text,el:el}]); }
+if(synth && "onvoiceschanged" in synth) synth.onvoiceschanged=function(){};
+
+/* ===================== Router ===================== */
+function route(){
+  stopSpeak();
+  var h=(location.hash||"#home").slice(1), parts=h.split("/");
+  var view=parts[0]||"home", arg=decodeURIComponent(parts.slice(1).join("/"));
+  if(!data.student && view!=="teacher" && view!=="restore") return renderSetup();
+  if(view==="module") return renderModule(+arg);
+  if(view==="lab") return renderLab(arg);
+  if(view==="report") return renderReport(arg);
+  if(view==="teacher") return renderTeacher();
+  if(view==="portfolio") return renderPortfolio();
+  return renderHome();
+}
+window.addEventListener("hashchange",function(){ flush(); route(); window.scrollTo(0,0); });
+var teacherUnlocked=false;
+
+/* ===================== Views ===================== */
+var app=$("#app");
+function renderSetup(){
+  app.innerHTML='<div class="card" style="max-width:620px;margin:30px auto">'+
+    '<div style="font-size:3rem" aria-hidden="true">🧪</div><h1>Welcome to Fun Lab Reports</h1>'+
+    '<p>This app helps you write lab reports for <b>Apologia Physical Science (4th Edition)</b>. Your work saves on this computer as you type.</p>'+
+    '<p class="muted small">A home teacher can set this up too.</p>'+
+    '<label for="sName"><b>Your first name</b></label><br><input type="text" id="sName" autocomplete="given-name" maxlength="30" style="width:100%;margin:6px 0 12px">'+
+    '<div class="row"><button class="btn" data-action="setupGo">Start</button><button class="say" data-say="Welcome to Fun Lab Reports. Type your first name, then press Start." aria-label="Read aloud">🔊</button></div>'+
+    '<p class="small muted" style="margin-top:14px">Moving from another computer? A home teacher can restore a backup file in the Home teacher area.</p></div>';
+  setTimeout(function(){ var i=$("#sName"); if(i) i.focus(); },50);
+}
+function renderHome(){
+  var labs=allLabs(), cur=currentModule();
+  var last=data.lastLab && labDef(data.lastLab) && !isDone(statusOf(data.lastLab)) ? labDef(data.lastLab) : null;
+  var next=null; labs.some(function(l){ if(!isDone(statusOf(l.id)) && !l.optional && l.m>=cur){ next=l; return true; } return false; });
+  var html='<h1>Hi, '+esc(data.student)+'! 👋</h1><p class="muted">Pick up where you left off, or open a module.</p>';
+  var days=data.lastBackup?Math.floor((Date.now()-data.lastBackup)/86400000):null;
+  var anyWork=Object.keys(data.labs).length>0;
+  if(anyWork && (days===null || days>=7)) html+='<div class="card safety noprint"><b>💾 Time for a backup.</b> '+(days===null?"Your work hasn't been backed up yet.":"Last backup was "+days+" days ago.")+' Ask your home teacher to press <b>Download backup</b> in the Home teacher area.</div>';
+  var go=last||next;
+  if(go){
+    html+='<div class="card"><h2>'+(last?"Continue":"Up next")+'</h2><p><b>Experiment '+esc(go.id)+':</b> '+esc(go.title)+' <span class="muted">(Module '+go.m+')</span></p>'+
+      '<div class="row"><a class="btn" href="#lab/'+encodeURIComponent(go.id)+'">'+(last?"Keep going":"Start this lab")+' →</a><a class="btn ghost" href="#module/'+go.m+'">See Module '+go.m+'</a></div></div>';
+  }
+  html+='<h2 style="margin-top:20px">Modules</h2><div class="grid">';
+  MODULES.forEach(function(m){
+    var ls=labs.filter(function(l){ return l.m===m.n && !l.optional; }), done=ls.filter(function(l){ return isDone(statusOf(l.id)); }).length;
+    var pct=ls.length?Math.round(done/ls.length*100):0;
+    html+='<a class="mod'+(m.n===cur?" now":"")+'" href="#module/'+m.n+'"><span class="num">Module '+m.n+(m.n===cur?" · now":"")+'</span><span class="t">'+esc(m.title)+'</span>'+
+      '<span class="small muted">'+(ls.length?done+" of "+ls.length+" experiments done":"Experiments not listed yet")+'</span><span class="bar"><span style="width:'+pct+'%"></span></span></a>';
+  });
+  html+='</div>';
+  app.innerHTML=html;
+}
+function safetyCard(m){
+  if(!m.safety) return "";
+  var text="Safety first. "+m.safety.items.join(" ")+" Poison help: call 1 8 4 4 POISON X. Emergency: call 9 1 1.";
+  return '<div class="card safety" id="safety"><div class="row" style="align-items:flex-start"><div class="row" style="gap:4px">'+m.safety.hz.map(function(h){return '<span class="hz" aria-hidden="true"><span>'+h+'</span></span>';}).join("")+'</div>'+
+    '<div style="flex:1 1 260px"><h3>Safety first</h3><ul>'+m.safety.items.map(function(s){return "<li>"+esc(s)+"</li>";}).join("")+'</ul>'+
+    '<p class="small"><b>Poison help (Canada):</b> 1-844-POISON-X (1-844-764-7669) · <b>Emergency:</b> 911</p></div>'+
+    '<button class="say" data-say="'+esc(text)+'" data-say-el="#safety" aria-label="Read safety card aloud">🔊</button></div></div>';
+}
+function renderModule(n){
+  var m=MODULES.filter(function(x){return x.n===n;})[0]; if(!m){ location.hash="#home"; return; }
+  var labs=allLabs().filter(function(l){ return l.m===n; }), ck=data.checklist[n]||{};
+  var html='<p class="small"><a href="#home">← All modules</a></p><h1>Module '+n+': '+esc(m.title)+'</h1>';
+  html+='<div class="card"><h2>Experiments</h2>';
+  if(!labs.length) html+='<p class="muted">The experiments for this module aren\'t listed yet. Your home teacher can add them in the Home teacher area (number and title from the textbook).</p>';
+  labs.forEach(function(l){
+    var r=data.labs[l.id];
+    html+='<div class="labrow"><div class="lt"><b>'+esc(l.id.indexOf(".Y")>0?"":"Experiment "+l.id+": ")+esc(l.title)+'</b>'+(l.optional?' <span class="pill grey">Optional</span>':'')+
+      '<div class="row" style="gap:6px;margin-top:4px">'+statusPill(statusOf(l.id),r)+l.tags.map(function(t){return '<span class="pill tag" title="'+esc(OUTCOMES[t]||"")+'">SK '+esc(t)+'</span>';}).join("")+'</div></div>'+
+      '<div class="row"><a class="btn small" href="#lab/'+encodeURIComponent(l.id)+'">'+(statusOf(l.id)==="not"?"Start":"Open")+'</a>'+
+      (statusOf(l.id)==="not"?'<button class="btn ghost small" data-action="elsewhere" data-id="'+esc(l.id)+'">Done in notebook</button>':'')+
+      (isDone(statusOf(l.id))&&statusOf(l.id)!=="elsewhere"?'<a class="btn ghost small" href="#report/'+encodeURIComponent(l.id)+'">Report</a>':'')+'</div></div>';
+  });
+  html+='</div>';
+  html+=safetyCard(m);
+  // checklist
+  var items=[]; m.bags.forEach(function(b){ b.items.forEach(function(i){ items.push({k:b.name+": "+i,label:i,group:b.name}); }); });
+  m.provide.forEach(function(i){ items.push({k:"You provide: "+i,label:i,group:"You provide"}); });
+  html+='<div class="card" id="supplies"><div class="row"><h2 style="flex:1">Supplies checklist</h2><button class="say" data-action="saySupplies" data-mod="'+n+'" aria-label="Read supplies aloud">🔊</button></div>';
+  if(m.note) html+='<p>'+esc(m.note)+'</p>';
+  if(items.length){
+    html+='<p class="small muted">Tick each item as you gather it. Put kit items back in their bag when you finish.</p>';
+    var groups=[]; items.forEach(function(i){ if(groups.indexOf(i.group)<0) groups.push(i.group); });
+    groups.forEach(function(g){
+      html+='<h3 style="margin-top:10px">'+esc(g==="You provide"?"From home":"From the kit: "+g)+'</h3>';
+      items.filter(function(i){return i.group===g;}).forEach(function(i,ix){
+        var id="ck_"+n+"_"+g.replace(/\W/g,"")+"_"+ix;
+        html+='<label class="check" for="'+id+'"><input type="checkbox" id="'+id+'" data-check="'+n+'" data-key="'+esc(i.k)+'"'+(ck[i.k]?" checked":"")+'><span>'+esc(i.label)+'</span></label>';
+      });
+    });
+    html+='<p class="small muted" style="margin-top:8px">Also loose in the kit box: '+esc(LOOSE.join(", "))+'.</p>';
+    html+='<button class="btn ghost small" data-action="clearChecks" data-mod="'+n+'">Untick all</button>';
+  }
+  html+='</div>';
+  app.innerHTML=html;
+}
+function sectionHTML(id,key){
+  var r=rec(id), s=SECTIONS[key], v=r.sections[key]||"", hints=coach(key,v);
+  var label=key==="conclusion"&&data.settings.length==="full"?"Discussion and Conclusion":s.label;
+  var extra="";
+  if(key==="data") extra=dataTools(id);
+  return '<div class="sect" id="sec_'+key+'"><div class="head"><h3><label for="ta_'+key+'">'+esc(label)+'</label></h3>'+
+    '<button class="say" data-say="'+esc(label+". "+s.help)+'" data-say-el="#sec_'+key+'" aria-label="Read the '+esc(label)+' instructions aloud">🔊</button></div>'+
+    '<p class="small muted">'+esc(s.help)+'</p>'+
+    '<textarea id="ta_'+key+'" data-sec="'+key+'" data-id="'+esc(id)+'" spellcheck="true">'+esc(v)+'</textarea>'+
+    '<ul class="hints" id="hints_'+key+'">'+hints.map(function(h){return "<li>"+esc(h)+"</li>";}).join("")+'</ul>'+extra+'</div>';
+}
+function dataTools(id){
+  var r=rec(id);
+  return '<div id="dataTools" style="margin-top:10px">'+tableHTML(id)+graphPanel(id)+calcHTML(id)+photosHTML(id)+'</div>';
+}
+function ensureTable(r){ if(!r.table) r.table={cols:[{name:"Trial",unit:""},{name:"",unit:""}],rows:[["1",""],["2",""],["3",""]]}; return r.table; }
+function tableHTML(id){
+  var t=ensureTable(rec(id));
+  var h='<h3 style="margin-top:6px">Data table</h3><p class="small muted">Name each column and pick its unit. Type numbers in the cells.</p><div class="tablewrap"><table class="dt"><thead><tr>';
+  t.cols.forEach(function(c,ci){ h+='<th><input type="text" aria-label="Column '+(ci+1)+' name" data-tcol="'+ci+'" value="'+esc(c.name)+'" placeholder="Column name"><select class="unit" aria-label="Column '+(ci+1)+' unit" data-tunit="'+ci+'">'+UNITS.map(function(u){return '<option'+(u===c.unit?" selected":"")+' value="'+esc(u)+'">'+(u||"(no unit)")+'</option>';}).join("")+'</select></th>'; });
+  h+='</tr></thead><tbody>';
+  t.rows.forEach(function(row,ri){ h+='<tr>'; t.cols.forEach(function(c,ci){ h+='<td><input type="text" inputmode="decimal" aria-label="Row '+(ri+1)+', '+esc(c.name||"column "+(ci+1))+'" data-tr="'+ri+'" data-tc="'+ci+'" value="'+esc(row[ci]||"")+'"></td>'; }); h+='</tr>'; });
+  h+='</tbody><tfoot><tr>'+t.cols.map(function(c,ci){ var a=avg(t,ci); return '<td class="small muted">'+(a!==null?"Average: "+a:"")+'</td>'; }).join("")+'</tr></tfoot></table></div>';
+  h+='<div class="row" style="margin-top:8px"><button class="btn ghost small" data-action="addRow">+ Row</button><button class="btn ghost small" data-action="addCol">+ Column</button><button class="btn ghost small" data-action="delRow">− Row</button><button class="btn ghost small" data-action="delCol">− Column</button></div>';
+  return h;
+}
+function avg(t,ci){ if(ci===0) return null; var vals=t.rows.map(function(r){return num(r[ci]);}).filter(function(x){return !isNaN(x);}); if(vals.length<2) return null; var s=vals.reduce(function(a,b){return a+b;},0)/vals.length; return (Math.round(s*100)/100)+(t.cols[ci].unit?" "+t.cols[ci].unit:""); }
+function graphPanel(id){
+  var r=rec(id), t=ensureTable(r), g=r.graph||{x:0,y:1,type:"line"};
+  var opts=function(sel){ return t.cols.map(function(c,ci){ return '<option value="'+ci+'"'+(ci===sel?" selected":"")+'>'+esc(c.name||"Column "+(ci+1))+'</option>'; }).join(""); };
+  return '<h3 style="margin-top:16px">Graph</h3><div class="row small"><label>Across the bottom (x): <select data-graph="x">'+opts(g.x)+'</select></label><label>Up the side (y): <select data-graph="y">'+opts(g.y)+'</select></label>'+
+    '<label>Type: <select data-graph="type"><option value="line"'+(g.type==="line"?" selected":"")+'>Line</option><option value="bar"'+(g.type==="bar"?" selected":"")+'>Bar</option></select></label>'+
+    '<label><input type="checkbox" data-graph="show"'+(g.show?" checked":"")+'> Put the graph in my report</label></div><div id="graphBox" style="margin-top:8px">'+graphSVG(t,g)+'</div>';
+}
+function graphSVG(t,g){
+  var xi=+g.x, yi=+g.y; if(!t.cols[xi]||!t.cols[yi]) return '<p class="small muted">Pick two columns.</p>';
+  var pts=t.rows.map(function(r){ return {xr:(r[xi]||"").trim(),x:num(r[xi]),y:num(r[yi])}; }).filter(function(p){ return !isNaN(p.y) && p.xr!==""; });
+  var cx=t.cols[xi], cy=t.cols[yi];
+  var missing=[]; if(!cx.name) missing.push("x column"); if(!cy.name) missing.push("y column");
+  if(pts.length<2) return '<p class="small muted">Type at least 2 rows of numbers to see a graph.</p>';
+  var lx=(cx.name||"?")+(cx.unit?" ("+cx.unit+")":""), ly=(cy.name||"?")+(cy.unit?" ("+cy.unit+")":"");
+  var W=560,H=340,L=64,R=16,T=16,B=56,pw=W-L-R,ph=H-T-B;
+  var ys=pts.map(function(p){return p.y;}), ymin=Math.min(0,Math.min.apply(null,ys)), ymax=Math.max.apply(null,ys); if(ymax===ymin) ymax=ymin+1;
+  var step=nice((ymax-ymin)/5); ymax=Math.ceil(ymax/step)*step; ymin=Math.floor(ymin/step)*step;
+  var Y=function(v){ return T+ph-(v-ymin)/(ymax-ymin)*ph; };
+  var s='<svg class="graph" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Graph of '+esc(ly)+' against '+esc(lx)+'">';
+  for(var v=ymin; v<=ymax+1e-9; v+=step){ var yy=Y(v); s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yy+'" y2="'+yy+'" stroke="currentColor" stroke-opacity=".12"/><text x="'+(L-6)+'" y="'+(yy+4)+'" text-anchor="end" font-size="12" fill="currentColor">'+fmtN(v)+'</text>'; }
+  var numericX=pts.every(function(p){return !isNaN(p.x);});
+  if(g.type==="line" && numericX){
+    pts.sort(function(a,b){return a.x-b.x;});
+    var xs=pts.map(function(p){return p.x;}), xmin=Math.min.apply(null,xs), xmax=Math.max.apply(null,xs); if(xmax===xmin) xmax=xmin+1;
+    var xstep=nice((xmax-xmin)/5); xmin=Math.floor(xmin/xstep)*xstep; xmax=Math.ceil(xmax/xstep)*xstep;
+    var X=function(v){ return L+(v-xmin)/(xmax-xmin)*pw; };
+    for(var u=xmin; u<=xmax+1e-9; u+=xstep){ s+='<text x="'+X(u)+'" y="'+(T+ph+18)+'" text-anchor="middle" font-size="12" fill="currentColor">'+fmtN(u)+'</text>'; }
+    s+='<polyline fill="none" stroke="#1f7a8c" stroke-width="3" points="'+pts.map(function(p){return X(p.x)+","+Y(p.y);}).join(" ")+'"/>';
+    pts.forEach(function(p){ s+='<circle cx="'+X(p.x)+'" cy="'+Y(p.y)+'" r="5" fill="#c2457a"><title>'+esc(p.xr)+": "+fmtN(p.y)+'</title></circle>'; });
+  } else {
+    var bw=pw/pts.length;
+    pts.forEach(function(p,i){ var x=L+i*bw+bw*0.15, y=Y(p.y); s+='<rect x="'+x+'" y="'+Math.min(y,Y(0))+'" width="'+(bw*0.7)+'" height="'+Math.abs(Y(0)-y)+'" fill="#1f7a8c" rx="3"><title>'+esc(p.xr)+": "+fmtN(p.y)+'</title></rect><text x="'+(L+i*bw+bw/2)+'" y="'+(T+ph+18)+'" text-anchor="middle" font-size="12" fill="currentColor">'+esc(p.xr.slice(0,12))+'</text>'; });
+    if(g.type==="line" && !numericX) s+='<text x="'+(W-R)+'" y="'+(T+12)+'" text-anchor="end" font-size="12" fill="currentColor">(x has words, so this shows as bars)</text>';
+  }
+  s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(Math.max(ymin,0))+'" y2="'+Y(Math.max(ymin,0))+'" stroke="currentColor"/><line x1="'+L+'" x2="'+L+'" y1="'+T+'" y2="'+(T+ph)+'" stroke="currentColor"/>';
+  s+='<text x="'+(L+pw/2)+'" y="'+(H-10)+'" text-anchor="middle" font-size="14" font-weight="700" fill="currentColor">'+esc(lx)+'</text>';
+  s+='<text transform="translate(16,'+(T+ph/2)+') rotate(-90)" text-anchor="middle" font-size="14" font-weight="700" fill="currentColor">'+esc(ly)+'</text></svg>';
+  if(missing.length || !cx.unit && xi!==0 || !cy.unit) s+='<p class="small" style="color:var(--warn)">💡 Every graph axis needs a name and a unit. '+(missing.length?"Name the "+missing.join(" and ")+". ":"")+(!cy.unit?"Pick a unit for the y column.":"")+'</p>';
+  return s;
+}
+function nice(x){ if(x<=0) return 1; var e=Math.pow(10,Math.floor(Math.log10(x))), f=x/e; return (f<1.5?1:f<3?2:f<7?5:10)*e; }
+function fmtN(v){ var a=Math.abs(v); return (a>=100||a===0)?String(Math.round(v)):String(Math.round(v*100)/100); }
+function calcHTML(id){
+  var d=labDef(id); if(!d||d.calc!=="density") return "";
+  var c=rec(id).calc||{};
+  return '<div class="card" style="margin:14px 0 0" id="calcCard"><h3>Density calculator</h3><p class="small muted">Density = mass ÷ volume. Check your own math with this.</p>'+
+    '<div class="row"><label>Mass <input type="text" inputmode="decimal" data-calc="m" value="'+esc(c.m||"")+'" style="width:110px"> g</label><label>Volume <input type="text" inputmode="decimal" data-calc="v" value="'+esc(c.v||"")+'" style="width:110px"> mL</label></div>'+
+    '<p id="calcOut" style="font-weight:700;margin-top:8px">'+calcOut(c)+'</p><button class="btn ghost small" data-action="calcInsert">Add this to my data</button></div>';
+}
+function calcOut(c){ var m=num(c.m), v=num(c.v); if(isNaN(m)||isNaN(v)) return "Type a mass and a volume."; if(v===0) return "Volume can't be zero."; var d=m/v; return "Density = "+fmtN(m)+" g ÷ "+fmtN(v)+" mL = "+(Math.round(d*1000)/1000)+" g/mL"+(d<1?" (less than water's 1.0 g/mL, so it should float in water)":d>1?" (more than water's 1.0 g/mL, so it should sink in water)":""); }
+function photosHTML(id){
+  var r=rec(id);
+  var h='<h3 style="margin-top:16px">Photos and drawings</h3><p class="small muted">Take a photo of your setup, results, or a drawing you made, and add a short caption.</p><div class="photos">';
+  r.photos.forEach(function(p,i){ h+='<div class="photo"><img data-photo="'+esc(p.id)+'" alt="'+esc(p.caption||"Lab photo")+'"><input type="text" aria-label="Photo caption" placeholder="Caption" data-cap="'+i+'" value="'+esc(p.caption||"")+'"><button class="btn ghost small" style="margin-top:4px;width:100%" data-action="delPhoto" data-i="'+i+'">Remove</button></div>'; });
+  h+='</div><label class="btn ghost small" style="margin-top:8px">📷 Add a photo<input type="file" accept="image/*" data-action="addPhoto" hidden></label>';
+  return h;
+}
+function renderLab(id){
+  var d=labDef(id); if(!d){ location.hash="#home"; return; }
+  var m=MODULES[d.m-1], r=rec(id);
+  data.lastLab=id;
+  if(!r.date) r.date=todayISO();
+  save();
+  if(r.status==="elsewhere"){
+    app.innerHTML='<p class="small"><a href="#module/'+d.m+'">← Module '+d.m+'</a></p><h1>'+esc(labName(d))+'</h1>'+
+      '<div class="card"><p>'+statusPill("elsewhere")+' This lab was done in the Student Notebook on <b>'+esc(fmtDate(r.elsewhere&&r.elsewhere.date))+'</b>.</p>'+(r.elsewhere&&r.elsewhere.note?'<p>'+esc(r.elsewhere.note)+'</p>':'')+
+      (r.photos.length?'<div class="photos">'+r.photos.map(function(p){return '<div class="photo"><img data-photo="'+esc(p.id)+'" alt="Notebook page"></div>';}).join("")+'</div>':'')+
+      '<div class="row" style="margin-top:12px"><button class="btn ghost" data-action="undoElsewhere" data-id="'+esc(id)+'">Write it up in the app instead</button></div></div>';
+    fillPhotos(app); return;
+  }
+  var secs=sectionsFor();
+  var head='<p class="small"><a href="#module/'+d.m+'">← Module '+d.m+'</a></p><h1>'+esc(labName(d))+'</h1>'+
+    '<div class="row" style="gap:6px">'+statusPill(r.status,r)+d.tags.map(function(t){return '<span class="pill tag" title="'+esc(OUTCOMES[t])+'">SK '+esc(t)+'</span>';}).join("")+'</div>'+
+    '<div class="card"><div class="row"><label>Date <input type="date" data-field="date" value="'+esc(r.date)+'"></label>'+
+    '<span class="small muted" style="flex:1 1 240px">Follow the steps in your textbook. Write your report here as you go. It saves by itself.</span>'+
+    '<button class="say" data-say="Follow the steps in your textbook for Experiment '+esc(id)+'. Write your report here as you go. It saves by itself." aria-label="Read aloud">🔊</button></div></div>';
+  var left=secs.filter(function(k){return k!=="data";}), html=head+safetyCard(m)+'<div class="cols"><div>';
+  secs.forEach(function(k){ if(k!=="data") html+=sectionHTML(id,k); });
+  html+='</div><div>'+sectionHTML(id,"data")+'</div></div>';
+  if(r.status==="finished" && r.comment) html+='<div class="card"><h3>💬 Note from your home teacher</h3><p style="white-space:pre-wrap">'+esc(r.comment)+'</p></div>';
+  html+='<div class="card row noprint"><a class="btn secondary" href="#report/'+encodeURIComponent(id)+'">See my report</a>'+
+    (r.status!=="finished"?'<button class="btn" data-action="finish" data-id="'+esc(id)+'">I\'m finished ✓</button>':'<span class="small muted">Finished '+esc(fmtDate(r.finished))+'. You can still make changes.</span>')+'</div>';
+  app.innerHTML=html;
+  // reorder: keep visual order Purpose.. in left, data on right
+  fillPhotos(app);
+}
+function reportHTML(id,forPrint){
+  var d=labDef(id), r=rec(id), secs=sectionsFor(), t=r.table, g=r.graph||{};
+  var h='<div class="report para" id="rep_'+esc(id)+'"><h1>'+esc(labName(d))+'</h1>'+
+    '<p class="meta">'+esc(data.student)+' · '+esc(fmtDate(r.date))+' · Apologia <i>Exploring Creation with Physical Science</i>, 4th ed., Module '+d.m+(d.tags.length?' · Saskatchewan outcomes: '+d.tags.join(", "):'')+'</p>';
+  secs.forEach(function(k){
+    var label=k==="conclusion"&&data.settings.length==="full"?"Discussion and Conclusion":SECTIONS[k].label;
+    var v=(r.sections[k]||"").trim();
+    h+='<h2>'+esc(label)+'</h2>';
+    if(v) h+=v.split(/\n{2,}/).map(function(p){return '<p class="p">'+esc(p)+'</p>';}).join("");
+    else if(k!=="data") h+='<p class="p" style="color:#999">(not written yet)</p>';
+    if(k==="data"){
+      var hasT=t && t.rows.some(function(row){ return row.some(function(c,ci){ return ci>0 && String(c||"").trim(); }); });
+      if(hasT){
+        var keep=t.cols.map(function(c,ci){ return ci===0 || !!c.name.trim() || t.rows.some(function(row){ return String(row[ci]||"").trim(); }); });
+        var useRows=t.rows.filter(function(row){ return row.some(function(c,ci){ return ci>0 && keep[ci] && String(c||"").trim(); }); });
+        h+='<table><thead><tr>'+t.cols.map(function(c,ci){ return keep[ci]?'<th>'+esc(c.name)+(c.unit?" ("+esc(c.unit)+")":"")+'</th>':""; }).join("")+'</tr></thead><tbody>'+
+          useRows.map(function(row){ return '<tr>'+t.cols.map(function(c,ci){ return keep[ci]?'<td>'+esc(row[ci]||"")+'</td>':""; }).join("")+'</tr>'; }).join("")+'</tbody></table>';
+        if(g.show) h+='<div style="max-width:560px;color:#111">'+graphSVG(t,g).replace(/<p class="small[\s\S]*$/,"")+'</div>';
+      }
+      if(r.photos.length) h+='<div>'+r.photos.map(function(p){ return '<figure><img data-photo="'+esc(p.id)+'" alt="'+esc(p.caption||"Lab photo")+'"><figcaption>'+esc(p.caption||"")+'</figcaption></figure>'; }).join("")+'</div>';
+      if(!v && !hasT && !r.photos.length) h+='<p class="p" style="color:#999">(no data yet)</p>';
+    }
+  });
+  if(r.comment) h+='<div class="comment"><b>Home teacher\'s comment'+(r.reviewed?" (reviewed)":"")+':</b><div class="p">'+esc(r.comment)+'</div></div>';
+  h+='</div>';
+  return h;
+}
+function renderReport(id){
+  var d=labDef(id); if(!d){ location.hash="#home"; return; }
+  app.innerHTML='<div class="row noprint" style="margin-bottom:12px"><a class="btn ghost" href="#lab/'+encodeURIComponent(id)+'">← Back to editing</a><button class="btn secondary" data-action="readReport" data-id="'+esc(id)+'">🔊 Read my report</button><button class="btn" data-action="print">🖨️ Print or save as PDF</button></div>'+
+    '<p class="small muted noprint">Hearing your report read aloud is a great way to catch mistakes. To save a PDF: Print → PDF → Save as PDF.</p>'+reportHTML(id);
+  fillPhotos(app);
+}
+function finishedList(reviewedOnly){
+  return allLabs().filter(function(l){ var s=statusOf(l.id); if(!isDone(s)) return false; if(reviewedOnly && s==="finished" && !data.labs[l.id].reviewed) return false; return true; });
+}
+function renderTeacher(){
+  if(data.settings.pin && !teacherUnlocked){
+    app.innerHTML='<div class="card" style="max-width:460px;margin:30px auto"><h1>Home teacher</h1><p>Enter the home teacher PIN.</p><input type="password" id="pinIn" inputmode="numeric" autocomplete="off" style="width:100%"><div class="row" style="margin-top:12px"><button class="btn" data-action="pinGo">Open</button><a class="btn ghost" href="#home">Back</a></div><p class="small muted">The PIN only keeps students out of this screen. It isn\'t a password lock on the data.</p></div>';
+    setTimeout(function(){ var i=$("#pinIn"); if(i) i.focus(); },50); return;
+  }
+  var labs=allLabs(), waiting=labs.filter(function(l){ return statusOf(l.id)==="finished" && !data.labs[l.id].reviewed; });
+  var days=data.lastBackup?Math.floor((Date.now()-data.lastBackup)/86400000):null;
+  var h='<p class="small"><a href="#home">← Student view</a></p><h1>Home teacher</h1>';
+  h+='<div class="card"><h2>Reports to review ('+waiting.length+')</h2>';
+  if(!waiting.length) h+='<p class="muted">Nothing waiting. Finished reports show up here.</p>';
+  waiting.forEach(function(l){ var r=data.labs[l.id];
+    h+='<div class="labrow"><div class="lt"><b>Experiment '+esc(l.id)+': '+esc(l.title)+'</b><div class="small muted">Finished '+esc(fmtDate(r.finished))+'</div>'+
+      '<label class="small" for="cm_'+esc(l.id)+'">Comment for the student (optional)</label><textarea id="cm_'+esc(l.id)+'" data-comment="'+esc(l.id)+'" style="min-height:70px">'+esc(r.comment||"")+'</textarea></div>'+
+      '<div class="row"><a class="btn ghost small" href="#report/'+encodeURIComponent(l.id)+'">Read report</a><button class="btn small" data-action="markReviewed" data-id="'+esc(l.id)+'">Mark reviewed ✓</button></div></div>'; });
+  h+='</div>';
+  h+='<div class="card"><h2>Portfolio pack</h2><p>For Saskatchewan\'s Annual Progress Report: an outcome summary, a monthly log, and every finished report, ready to print or save as a PDF.</p><a class="btn" href="#portfolio">Open portfolio pack</a></div>';
+  h+='<div class="card"><h2>Backup</h2><p>'+(days===null?"<b>No backup yet.</b>":"Last backup: "+days+" day"+(days===1?"":"s")+" ago.")+' A backup file holds all reports and photos. Keep it somewhere safe (iCloud Drive, a USB stick, or email it to yourself). Back up once a week.</p>'+
+    '<div class="row"><button class="btn" data-action="backup">💾 Download backup</button><label class="btn ghost">Restore from a backup…<input type="file" accept=".json,application/json" data-action="restore" hidden></label></div></div>';
+  h+='<div class="card"><h2>Add an experiment</h2><p class="small muted">Use the number and title from the textbook. Only add titles, not the steps.</p>'+
+    '<div class="row"><label>Module <select id="addM">'+MODULES.map(function(m){return '<option value="'+m.n+'">'+m.n+'. '+esc(m.title)+'</option>';}).join("")+'</select></label>'+
+    '<label>Number <input type="text" id="addNum" placeholder="e.g. 4.1" style="width:90px"></label></div>'+
+    '<div class="row" style="margin-top:8px"><label style="flex:1 1 300px">Title <input type="text" id="addTitle" style="width:100%"></label><label><input type="checkbox" id="addOpt"> Optional</label></div>'+
+    '<div class="row" style="margin-top:8px">'+Object.keys(OUTCOMES).map(function(k){return '<label class="small" title="'+esc(OUTCOMES[k])+'"><input type="checkbox" data-addtag="'+k+'"> '+k+'</label>';}).join(" ")+'</div>'+
+    '<button class="btn" style="margin-top:10px" data-action="addLab">Add experiment</button>';
+  if(data.custom.length){ h+='<h3 style="margin-top:14px">Experiments you added</h3>'+data.custom.map(function(c){ return '<div class="labrow"><div class="lt">'+esc(c.id)+' · '+esc(c.title)+(c.optional?" (optional)":"")+'</div><button class="btn ghost small" data-action="delLab" data-id="'+esc(c.id)+'">Remove</button></div>'; }).join(""); }
+  h+='</div>';
+  h+='<div class="card"><h2>Saskatchewan outcome tags</h2><p class="small muted">Tick the Science 9 outcomes each experiment gives evidence for. These feed the portfolio summary.</p>';
+  labs.forEach(function(l){ h+='<div class="labrow"><div class="lt"><b>'+esc(l.id)+'</b> '+esc(l.title)+'</div><div class="row small">'+Object.keys(OUTCOMES).map(function(k){ return '<label title="'+esc(OUTCOMES[k])+'"><input type="checkbox" data-tag="'+k+'" data-id="'+esc(l.id)+'"'+(l.tags.indexOf(k)>=0?" checked":"")+'> '+k+'</label>'; }).join(" ")+'</div></div>'; });
+  h+='</div>';
+  h+='<div class="card"><h2>Settings</h2>'+
+    '<div class="row"><label>Student\'s first name <input type="text" id="setName" value="'+esc(data.student)+'"></label></div>'+
+    '<div class="row" style="margin-top:10px"><label>Report length <select id="setLen"><option value="short"'+(data.settings.length==="short"?" selected":"")+'>Short: Title, Date, Data and Observations, Conclusion</option><option value="full"'+(data.settings.length==="full"?" selected":"")+'>Full: Purpose, Hypothesis, Materials, Procedure, Data, Results, Discussion and Conclusion</option></select></label></div>'+
+    '<div class="row" style="margin-top:10px"><label>Home teacher PIN (optional) <input type="password" id="setPin" inputmode="numeric" value="'+esc(data.settings.pin)+'" style="width:140px"></label><span class="small muted">Keeps students out of this screen only.</span></div>'+
+    '<button class="btn" style="margin-top:12px" data-action="saveSettings">Save settings</button></div>';
+  h+='<div class="card"><h2>Erase everything</h2><p class="small">Deletes all reports and photos on this computer. Download a backup first.</p><button class="btn danger" data-action="eraseAll">Erase everything…</button></div>';
+  app.innerHTML=h;
+}
+function renderPortfolio(){
+  if(data.settings.pin && !teacherUnlocked){ location.hash="#teacher"; return; }
+  var ro=!!window.__pfReviewedOnly, labs=finishedList(ro);
+  var h='<div class="row noprint" style="margin-bottom:12px"><a class="btn ghost" href="#teacher">← Home teacher</a><button class="btn" data-action="print">🖨️ Print or save as PDF</button><label class="small"><input type="checkbox" data-action="pfToggle"'+(ro?" checked":"")+'> Reviewed reports only</label></div>';
+  h+='<div class="report"><h1>Science Portfolio: Physical Science Labs</h1><p class="meta">'+esc(data.student)+' · Apologia <i>Exploring Creation with Physical Science</i>, 4th Edition · Prepared '+esc(fmtDate(todayISO()))+'</p>';
+  h+='<h2>Saskatchewan Science 9 outcomes: evidence</h2><table><thead><tr><th>Outcome</th><th>What it covers</th><th>Evidence</th></tr></thead><tbody>';
+  Object.keys(OUTCOMES).forEach(function(k){ var ev=labs.filter(function(l){return l.tags.indexOf(k)>=0;}); h+='<tr><td><b>'+k+'</b></td><td>'+esc(OUTCOMES[k])+'</td><td>'+(ev.length?ev.map(function(l){return "Exp. "+esc(l.id);}).join(", "):"<i>Not yet</i>")+'</td></tr>'; });
+  h+='</tbody></table>';
+  h+='<h2>Periodic log</h2>';
+  var byM={}; labs.forEach(function(l){ var r=data.labs[l.id], dt=r.status==="elsewhere"?(r.elsewhere&&r.elsewhere.date):(r.finished||r.date); var k=monthKey(dt||""); (byM[k]=byM[k]||[]).push({l:l,dt:dt,r:r}); });
+  var keys=Object.keys(byM).sort();
+  if(!keys.length) h+='<p>No labs finished yet.</p>';
+  keys.forEach(function(k){ h+='<p><b>'+(k?esc(monthName(k)):"Undated")+'</b></p><ul>'+byM[k].sort(function(a,b){return (a.dt||"")<(b.dt||"")?-1:1;}).map(function(x){ return '<li>'+esc(fmtDate(x.dt))+': Experiment '+esc(x.l.id)+', '+esc(x.l.title)+(x.r.status==="elsewhere"?" (done in Student Notebook)":"")+(x.r.reviewed?" ✓ reviewed":"")+'</li>'; }).join("")+'</ul>'; });
+  h+='</div>';
+  labs.filter(function(l){return statusOf(l.id)==="finished";}).forEach(function(l){ h+='<div class="pf-break" style="margin-top:20px">'+reportHTML(l.id)+'</div>'; });
+  app.innerHTML=h; fillPhotos(app);
+}
+
+/* ===================== Modals ===================== */
+function modal(html){ var root=$("#modalRoot"); root.innerHTML='<div class="modal" role="dialog" aria-modal="true"><div class="box">'+html+'</div></div>'; var f=root.querySelector("input,select,textarea,button"); if(f) f.focus(); }
+function closeModal(){ $("#modalRoot").innerHTML=""; }
+document.addEventListener("keydown",function(e){ if(e.key==="Escape"){ if($("#modalRoot").innerHTML) closeModal(); else stopSpeak(); } });
+
+/* ===================== Events ===================== */
+document.addEventListener("click",function(e){
+  var sayB=e.target.closest("[data-say]");
+  if(sayB){ var el=sayB.getAttribute("data-say-el"); sayText(sayB.getAttribute("data-say"), el?$(el):sayB.closest(".sect,.card")); return; }
+  var b=e.target.closest("[data-action]"); if(!b) return;
+  var a=b.getAttribute("data-action"), id=b.getAttribute("data-id");
+  if(b.tagName==="INPUT" && (b.type==="file"||b.type==="checkbox")) return; // handled on change
+  if(a==="setupGo"){ var n=($("#sName").value||"").trim(); if(!n){ toast("Type your first name first."); return; } data.student=n.split(/\s+/)[0].slice(0,30); save(true); location.hash="#home"; route(); return; }
+  if(a==="stopSpeak"){ stopSpeak(); return; }
+  if(a==="voicePanel"){ voicePanel(); return; }
+  if(a==="closeModal"){ closeModal(); return; }
+  if(a==="print"){ window.print(); return; }
+  if(a==="saySupplies"){ var mm=MODULES[+b.getAttribute("data-mod")-1], words=[]; mm.bags.forEach(function(bg){ words.push("From the kit, "+bg.name+": "+bg.items.join(", ")+"."); }); if(mm.provide.length) words.push("From home: "+mm.provide.join(", ")+"."); if(mm.note) words.push(mm.note); sayText(words.join(" ")||"No supplies needed.",$("#supplies")); return; }
+  if(a==="clearChecks"){ data.checklist[b.getAttribute("data-mod")]={}; save(); route(); return; }
+  if(a==="elsewhere"){ elsewhereModal(id); return; }
+  if(a==="elsewhereSave"){ var r=rec(id), dt=$("#ewDate").value||todayISO(); r.status="elsewhere"; r.elsewhere={date:dt,note:($("#ewNote").value||"").trim()}; r.date=dt; save(true); closeModal(); toast("Saved as done in the notebook."); route(); return; }
+  if(a==="undoElsewhere"){ var r2=rec(id); r2.status=Object.keys(r2.sections).length?"progress":"not"; r2.elsewhere=null; save(); route(); return; }
+  if(a==="finish"){ var rr=rec(id), miss=sectionsFor().filter(function(k){ return k!=="data" && !(rr.sections[k]||"").trim(); });
+    if(miss.length){ modal('<h2>Almost there</h2><p>These parts are still empty: <b>'+miss.map(function(k){return esc(SECTIONS[k].label);}).join(", ")+'</b>.</p><p>Finish them first, or mark it finished anyway?</p><div class="row"><button class="btn" data-action="closeModal">Keep working</button><button class="btn ghost" data-action="finishAnyway" data-id="'+esc(id)+'">Finished anyway</button></div>'); return; }
+    doFinish(id); return; }
+  if(a==="finishAnyway"){ closeModal(); doFinish(id); return; }
+  if(a==="addRow"||a==="addCol"||a==="delRow"||a==="delCol"){ tableOp(a); return; }
+  if(a==="calcInsert"){ var lid=currentLabId(), c=rec(lid).calc||{}, out=calcOut(c); if(/^Density =/.test(out)){ var ta=$("#ta_data"); ta.value=(ta.value?ta.value.replace(/\s+$/,"")+"\n":"")+out.replace(/ \(.*\)$/,"")+"."; onSection(ta); toast("Added to your data."); } else toast(out); return; }
+  if(a==="delPhoto"){ var lr=rec(currentLabId()), i=+b.getAttribute("data-i"), p=lr.photos[i]; if(!p) return; lr.photos.splice(i,1); idbDel("photos",p.id); save(); refreshData(); return; }
+  if(a==="readReport"){ var paras=$all("#app .report h1, #app .report h2, #app .report p, #app .report figcaption").map(function(el){ return {text:el.textContent,el:el}; }); speakItems(paras); return; }
+  if(a==="pinGo"){ if(($("#pinIn").value||"")===data.settings.pin){ teacherUnlocked=true; route(); } else toast("That PIN doesn't match."); return; }
+  if(a==="markReviewed"){ var x=rec(id), ta2=$('[data-comment="'+cssEsc(id)+'"]'); if(ta2) x.comment=ta2.value.trim(); x.reviewed=true; save(true); toast("Marked reviewed."); route(); return; }
+  if(a==="backup"){ doBackup(); return; }
+  if(a==="addLab"){ addLab(); return; }
+  if(a==="delLab"){ if(hasRec(id) && Object.keys(data.labs[id].sections).length){ if(!confirm("This experiment has written work. Remove it and its report?")) return; } data.custom=data.custom.filter(function(c){return c.id!==id;}); delete data.labs[id]; save(true); route(); return; }
+  if(a==="saveSettings"){ var nm=($("#setName").value||"").trim(); if(nm) data.student=nm.split(/\s+/)[0].slice(0,30); data.settings.length=$("#setLen").value; data.settings.pin=($("#setPin").value||"").trim(); teacherUnlocked=true; save(true); toast("Settings saved."); return; }
+  if(a==="eraseAll"){ modal('<h2>Erase everything?</h2><p>All reports and photos on this computer will be deleted. This can\'t be undone without a backup file.</p><label for="eraseConfirm">Type <b>ERASE</b> to confirm</label><input type="text" id="eraseConfirm" style="width:100%;margin:6px 0 12px"><div class="row"><button class="btn danger" data-action="eraseGo">Erase</button><button class="btn ghost" data-action="closeModal">Cancel</button></div>'); return; }
+  if(a==="eraseGo"){ if(($("#eraseConfirm").value||"").trim()!=="ERASE"){ toast("Type ERASE to confirm."); return; } idbClear("photos").then(function(){ data=fresh(); return idbPut("kv","data",data); }).then(function(){ closeModal(); teacherUnlocked=false; location.hash="#home"; route(); toast("Everything was erased."); }); return; }
+  if(a==="restoreGo"){ doRestore(); return; }
+});
+function cssEsc(s){ return String(s).replace(/["\\]/g,"\\$&"); }
+function currentLabId(){ var h=location.hash.slice(1).split("/"); return h[0]==="lab"?decodeURIComponent(h.slice(1).join("/")):""; }
+function doFinish(id){ var r=rec(id); r.status="finished"; r.finished=todayISO(); r.reviewed=false; save(true); location.hash="#report/"+encodeURIComponent(id); toast("Nice work! Your report is finished. 🎉"); }
+
+document.addEventListener("input",function(e){
+  var t=e.target;
+  if(t.matches("textarea[data-sec]")) return onSection(t);
+  var lid=currentLabId();
+  if(t.matches("[data-tcol]")){ var tb=ensureTable(rec(lid)); tb.cols[+t.getAttribute("data-tcol")].name=t.value; touch(lid); refreshGraph(); return; }
+  if(t.matches("[data-tr]")){ var tb2=ensureTable(rec(lid)); tb2.rows[+t.getAttribute("data-tr")][+t.getAttribute("data-tc")]=t.value; touch(lid); refreshGraph(); refreshAvg(); return; }
+  if(t.matches("[data-calc]")){ var r=rec(lid); r.calc=r.calc||{}; r.calc[t.getAttribute("data-calc")]=t.value; $("#calcOut").textContent=calcOut(r.calc); save(); return; }
+  if(t.matches("[data-cap]")){ rec(lid).photos[+t.getAttribute("data-cap")].caption=t.value; save(); return; }
+  if(t.matches("[data-comment]")){ rec(t.getAttribute("data-comment")).comment=t.value; save(); return; }
+  if(t.matches("[data-field=date]")){ rec(lid).date=t.value; save(); return; }
+});
+document.addEventListener("change",function(e){
+  var t=e.target, lid=currentLabId();
+  if(t.matches("[data-tunit]")){ ensureTable(rec(lid)).cols[+t.getAttribute("data-tunit")].unit=t.value; touch(lid); refreshGraph(); refreshAvg(); return; }
+  if(t.matches("[data-graph]")){ var r=rec(lid); r.graph=r.graph||{x:0,y:1,type:"line"}; var k=t.getAttribute("data-graph"); r.graph[k]=k==="show"?t.checked:(k==="type"?t.value:+t.value); save(); refreshGraph(); return; }
+  if(t.matches("[data-check]")){ var m=t.getAttribute("data-check"); data.checklist[m]=data.checklist[m]||{}; data.checklist[m][t.getAttribute("data-key")]=t.checked; save(); return; }
+  if(t.matches("[data-tag]")){ var id=t.getAttribute("data-id"), d=labDef(id), tags=d.tags.slice(), k2=t.getAttribute("data-tag"); if(t.checked){ if(tags.indexOf(k2)<0) tags.push(k2); } else tags=tags.filter(function(x){return x!==k2;}); data.tagEdits[id]=tags; save(); return; }
+  if(t.matches("[data-action=addPhoto]")){ var f=t.files&&t.files[0]; if(!f) return; toast("Adding photo…"); var target=lid||t.getAttribute("data-id");
+    addPhotoFromFile(f).then(function(pid){ rec(target).photos.push({id:pid,caption:""}); touch(target); save(true); if(lid) refreshData(); else { var ph=$("#ewPhotos"); if(ph) ph.textContent=rec(target).photos.length+" photo(s) attached."; } toast("Photo added."); })
+      .catch(function(err){ toast(err.message||"Couldn't add that photo."); }); t.value=""; return; }
+  if(t.matches("[data-action=restore]")){ var f2=t.files&&t.files[0]; if(f2) restoreModal(f2); t.value=""; return; }
+  if(t.matches("[data-action=pfToggle]")){ window.__pfReviewedOnly=t.checked; renderPortfolio(); return; }
+  if(t.matches("#vVoice")){ data.settings.voice=t.value; save(); return; }
+  if(t.matches("#vRate")){ data.settings.rate=+t.value; save(); return; }
+  if(t.matches("#vHl")){ data.settings.highlight=t.checked; save(); return; }
+});
+document.addEventListener("keydown",function(e){ if(e.key==="Enter" && e.target.id==="sName"){ e.preventDefault(); $("[data-action=setupGo]").click(); } if(e.key==="Enter" && e.target.id==="pinIn"){ e.preventDefault(); $("[data-action=pinGo]").click(); } });
+
+function touch(id){ var r=rec(id); if(r.status==="not") r.status="progress"; save(); }
+var hintTimer=null;
+function onSection(t){
+  var id=t.getAttribute("data-id"), k=t.getAttribute("data-sec"), r=rec(id);
+  r.sections[k]=t.value; touch(id);
+  clearTimeout(hintTimer);
+  hintTimer=setTimeout(function(){ var ul=$("#hints_"+k); if(ul) ul.innerHTML=coach(k,t.value).map(function(h){return "<li>"+esc(h)+"</li>";}).join(""); },700);
+}
+function refreshGraph(){ var lid=currentLabId(), box=$("#graphBox"); if(box){ var r=rec(lid); box.innerHTML=graphSVG(ensureTable(r),r.graph||{x:0,y:1,type:"line"}); } }
+function refreshAvg(){ var lid=currentLabId(), t=ensureTable(rec(lid)), cells=$all("table.dt tfoot td"); cells.forEach(function(td,ci){ var a=avg(t,ci); td.textContent=a!==null?"Average: "+a:""; }); }
+function refreshData(){ var lid=currentLabId(), box=$("#dataTools"); if(box){ var y=window.scrollY; box.outerHTML=dataTools(lid); fillPhotos(app); window.scrollTo(0,y); } }
+function tableOp(a){
+  var lid=currentLabId(), t=ensureTable(rec(lid));
+  if(a==="addRow") t.rows.push(t.cols.map(function(c,ci){ return ci===0?String(t.rows.length+1):""; }));
+  if(a==="addCol"){ if(t.cols.length>=8){ toast("8 columns is the limit."); return; } t.cols.push({name:"",unit:""}); t.rows.forEach(function(r){ r.push(""); }); }
+  if(a==="delRow"){ if(t.rows.length<=1) return; var last=t.rows[t.rows.length-1]; if(last.some(function(c,ci){return ci>0&&String(c).trim();}) && !confirm("The last row has data in it. Remove it?")) return; t.rows.pop(); }
+  if(a==="delCol"){ if(t.cols.length<=2) return; var ci=t.cols.length-1; if(t.rows.some(function(r){return String(r[ci]||"").trim();}) && !confirm("The last column has data in it. Remove it?")) return; t.cols.pop(); t.rows.forEach(function(r){ r.pop(); }); var g=rec(lid).graph; if(g){ if(g.x>=t.cols.length) g.x=0; if(g.y>=t.cols.length) g.y=1; } }
+  touch(lid); refreshData();
+}
+function elsewhereModal(id){
+  var d=labDef(id);
+  modal('<h2>Done in the Student Notebook</h2><p>Experiment '+esc(id)+': '+esc(d.title)+'</p><p class="small muted">Use this for a lab that was written up in the Student Notebook instead of here. It still counts in the portfolio log.</p>'+
+    '<label>Date it was done <input type="date" id="ewDate" value="'+todayISO()+'"></label>'+
+    '<p style="margin-top:10px"><label for="ewNote">Note (optional)</label><textarea id="ewNote" style="min-height:70px" placeholder="e.g. Pages 12–13 of the Student Notebook"></textarea></p>'+
+    '<label class="btn ghost small">📷 Add a photo of the notebook page<input type="file" accept="image/*" data-action="addPhoto" data-id="'+esc(id)+'" hidden></label> <span class="small muted" id="ewPhotos"></span>'+
+    '<div class="row" style="margin-top:14px"><button class="btn" data-action="elsewhereSave" data-id="'+esc(id)+'">Save</button><button class="btn ghost" data-action="closeModal">Cancel</button></div>');
+}
+function voicePanel(){
+  var vs=voices(), cur=pickVoice();
+  modal('<h2>🔊 Reading voice</h2>'+(synth?'':'<p>Read-aloud isn\'t available in this browser.</p>')+
+    '<p><label>Voice <select id="vVoice" style="width:100%">'+vs.map(function(v){ return '<option value="'+esc(v.name)+'"'+(cur&&cur.name===v.name?" selected":"")+'>'+esc(v.name)+' ('+esc(v.lang)+')</option>'; }).join("")+'</select></label></p>'+
+    '<p><label>Speed <select id="vRate"><option value="0.8"'+(data.settings.rate==0.8?" selected":"")+'>Slow</option><option value="1"'+(data.settings.rate==1?" selected":"")+'>Normal</option><option value="1.2"'+(data.settings.rate==1.2?" selected":"")+'>Fast</option></select></label></p>'+
+    '<p><label><input type="checkbox" id="vHl"'+(data.settings.highlight?" checked":"")+'> Highlight what\'s being read</label></p>'+
+    '<div class="row"><button class="btn secondary" data-say="This is how your lab reports will sound when they are read aloud.">Try it</button><button class="btn" data-action="closeModal">Done</button></div>');
+}
+function addLab(){
+  var m=+$("#addM").value, n=($("#addNum").value||"").trim(), t=($("#addTitle").value||"").trim();
+  if(!/^\d{1,2}\.[A-Za-z0-9]{1,3}$/.test(n)){ toast("Number should look like 4.1"); return; }
+  if(+n.split(".")[0]!==m){ toast("The number should start with the module number ("+m+")."); return; }
+  if(!t){ toast("Type the title."); return; }
+  if(labDef(n)){ toast("Experiment "+n+" is already in the list."); return; }
+  var tags=$all("[data-addtag]").filter(function(c){return c.checked;}).map(function(c){return c.getAttribute("data-addtag");});
+  data.custom.push({id:n,m:m,title:t,optional:$("#addOpt").checked,tags:tags}); save(true); toast("Added Experiment "+n+"."); route();
+}
+
+/* ===================== Backup / restore ===================== */
+function blobToDataURL(b){ return new Promise(function(res,rej){ var r=new FileReader(); r.onload=function(){res(r.result);}; r.onerror=function(){rej(r.error);}; r.readAsDataURL(b); }); }
+function dataURLToBlob(u){ var p=u.split(","), mime=(p[0].match(/:(.*?);/)||[])[1]||"image/jpeg", bin=atob(p[1]), arr=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i); return new Blob([arr],{type:mime}); }
+function doBackup(){
+  toast("Making backup…");
+  flush().then(function(){ return idbAllKeys("photos"); }).then(function(keys){
+    return Promise.all(keys.map(function(k){ return idbGet("photos",k).then(function(r){ return r&&r.blob?blobToDataURL(r.blob).then(function(u){ return [k,u]; }):null; }); }));
+  }).then(function(pairs){
+    var photos={}; pairs.forEach(function(p){ if(p) photos[p[0]]=p[1]; });
+    data.lastBackup=Date.now();
+    var out={app:"fun-lab-reports",appVersion:APP_VERSION,saved:new Date().toISOString(),data:data,photos:photos};
+    var blob=new Blob([JSON.stringify(out)],{type:"application/json"}), a=document.createElement("a");
+    a.href=URL.createObjectURL(blob); a.download="fun-lab-reports-backup-"+(data.student||"student").replace(/\W/g,"")+"-"+todayISO()+".json";
+    document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },1500);
+    save(true); toast("Backup downloaded. Check your Downloads folder."); if(location.hash==="#teacher") route();
+  }).catch(function(e){ toast("Backup failed: "+(e&&e.message||e)); });
+}
+var pendingRestore=null;
+function restoreModal(file){
+  var fr=new FileReader();
+  fr.onload=function(){
+    var obj; try{ obj=JSON.parse(fr.result); }catch(e){ toast("That isn't a Fun Lab Reports backup file."); return; }
+    if(!obj || obj.app!=="fun-lab-reports" || !obj.data || typeof obj.data.labs!=="object"){ toast("That isn't a Fun Lab Reports backup file."); return; }
+    pendingRestore=obj;
+    var n=Object.keys(obj.data.labs).length, ph=Object.keys(obj.photos||{}).length;
+    modal('<h2>Restore this backup?</h2><p>Backup from <b>'+esc(new Date(obj.saved).toLocaleString("en-CA"))+'</b> for <b>'+esc(obj.data.student||"(no name)")+'</b>: '+n+' lab'+(n===1?"":"s")+', '+ph+' photo'+(ph===1?"":"s")+'.</p><p><b>This replaces everything currently on this computer.</b></p><div class="row"><button class="btn danger" data-action="restoreGo">Replace with backup</button><button class="btn ghost" data-action="closeModal">Cancel</button></div>');
+  };
+  fr.readAsText(file);
+}
+function doRestore(){
+  var obj=pendingRestore; if(!obj) return;
+  var d=migrate(obj.data), photos=obj.photos||{};
+  idbClear("photos").then(function(){
+    return Object.keys(photos).reduce(function(p,k){ return p.then(function(){ return idbPut("photos",k,{blob:dataURLToBlob(photos[k]),t:Date.now()}); }); },Promise.resolve());
+  }).then(function(){ data=d; urlCache={}; return idbPut("kv","data",data); }).then(function(){ pendingRestore=null; closeModal(); toast("Backup restored."); location.hash="#home"; route(); })
+    .catch(function(e){ toast("Restore failed: "+(e&&e.message||e)); });
+}
+
+/* ===================== Start ===================== */
+openDB().then(function(d){ db=d; return idbGet("kv","data"); }).then(function(d){
+  data=migrate(d||fresh());
+  if(!d) idbPut("kv","data",data);
+  if(navigator.storage && navigator.storage.persist){ navigator.storage.persisted().then(function(p){ if(!p) navigator.storage.persist(); }).catch(function(){}); }
+  route();
+}).catch(function(e){
+  app.innerHTML='<div class="card safety"><h2>This browser can\'t save work here</h2><p>'+esc(e&&e.message||e)+'</p><p>Try opening Fun Lab Reports in Safari or Chrome (not a private window).</p></div>';
+});
+})();
+</script>
+</body>
+</html>
