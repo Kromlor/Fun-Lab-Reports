@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fun Lab Reports – Safari Test</title>
+<style>
+  :root{
+    --bg:#f6f8fb; --card:#ffffff; --ink:#1d2433; --muted:#5b6475; --line:#d9dee8;
+    --accent:#1f7a8c; --accent-2:#f2a541; --ok:#1e8e4f; --warn:#b26a00; --bad:#b3261e;
+    --hl:#fff1c2;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#141821; --card:#1d2230; --ink:#e8ecf3; --muted:#a6afc0; --line:#323a4d;
+      --accent:#5cc2d4; --accent-2:#f2b05e; --ok:#5bd08d; --warn:#f0b35a; --bad:#ff8a80; --hl:#4a3f12;
+    }
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:17px/1.5 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif}
+  main{max-width:820px;margin:0 auto;padding:20px 16px 60px}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  header .logo{font-size:34px}
+  h1{font-size:1.5rem;margin:0}
+  .sub{color:var(--muted);margin:0 0 18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:14px 0}
+  .card h2{font-size:1.1rem;margin:0 0 8px;display:flex;gap:8px;align-items:center}
+  .step{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;
+    background:var(--accent);color:#fff;font-weight:700;font-size:.95rem;flex:none}
+  button,.btn{font:inherit;border:0;border-radius:10px;padding:10px 16px;min-height:44px;
+    background:var(--accent);color:#fff;cursor:pointer;font-weight:600}
+  button.secondary{background:transparent;color:var(--accent);border:2px solid var(--accent)}
+  button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent-2);outline-offset:2px}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0}
+  .pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.88rem;font-weight:700}
+  .pill.ok{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+  .pill.warn{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+  .pill.bad{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+  table{width:100%;border-collapse:collapse;font-size:.92rem}
+  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  .muted{color:var(--muted)}
+  .small{font-size:.9rem}
+  img.preview{max-width:220px;max-height:160px;border-radius:8px;border:1px solid var(--line);display:block;margin-top:8px}
+  .read p{margin:6px 0;padding:4px 6px;border-radius:6px}
+  .read p.speaking{background:var(--hl)}
+  textarea{width:100%;min-height:150px;font:14px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--line);
+    border-radius:10px;padding:10px;background:var(--bg);color:var(--ink)}
+  select,input[type=text]{font:inherit;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-height:44px;max-width:100%}
+  ol.howto li{margin:4px 0}
+  .stopbar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:5}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <header><span class="logo" aria-hidden="true">🧪</span><div><h1>Fun Lab Reports: Safari test</h1></div></header>
+  <p class="sub">This page checks that the MacBook can save lab work, keep photos, and read text aloud. It takes about 5 minutes today, then 1 minute on two later days. Nothing leaves this computer.</p>
+
+  <div class="card">
+    <h2><span class="step">✓</span> How to do the test</h2>
+    <ol class="howto">
+      <li><b>Today:</b> do steps 1–4 below.</li>
+      <li>Quit Safari completely (<b>⌘ + Q</b>), open this same file again, and look at step 1. Your saved note and photo should still be there.</li>
+      <li><b>In 3–4 days</b> and again <b>after 8 or more days</b>: open this same file (don't move or rename it) and check step 1 again.</li>
+      <li>Each time, press <b>Copy my results</b> at the bottom and send them to Riley.</li>
+    </ol>
+  </div>
+
+  <div class="card" id="cardSaved">
+    <h2><span class="step">1</span> Did the saved work survive?</h2>
+    <div id="survive" class="row"></div>
+    <div id="savedNote" class="small"></div>
+    <img id="savedPhoto" class="preview" alt="Saved test photo" hidden>
+    <p class="small muted" id="firstSeen"></p>
+    <details><summary class="small">Visit history</summary>
+      <table><thead><tr><th>#</th><th>Opened</th><th>Saved in database</th><th>Saved in simple storage</th></tr></thead><tbody id="visits"></tbody></table>
+    </details>
+  </div>
+
+  <div class="card">
+    <h2><span class="step">2</span> Save a test note and photo</h2>
+    <div class="row"><input type="text" id="note" placeholder="Type anything, e.g. Test from Monday" aria-label="Test note" style="flex:1 1 260px"></div>
+    <div class="row">
+      <label class="btn" for="photo" style="display:inline-flex;align-items:center">📷 Choose a photo</label>
+      <input type="file" id="photo" accept="image/*" hidden>
+      <span id="photoStatus" class="small muted">No photo chosen (optional; a sample picture is used if you skip this)</span>
+    </div>
+    <div class="row"><button id="saveBtn">Save test data</button><span id="saveStatus" class="small"></span></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="step">3</span> Ask Safari to keep the data</h2>
+    <p class="small">Safari may ask permission. Choose <b>Allow</b> if it does.</p>
+    <div class="row"><button id="persistBtn" class="secondary">Ask to keep data</button><span id="persistStatus" class="small"></span></div>
+    <p class="small muted" id="quota"></p>
+  </div>
+
+  <div class="card">
+    <h2><span class="step">4</span> Read-aloud test</h2>
+    <div class="row">
+      <label for="voice" class="small">Voice</label>
+      <select id="voice" style="flex:1 1 260px"></select>
+      <label for="rate" class="small">Speed</label>
+      <select id="rate"><option value="0.8">Slow</option><option value="1" selected>Normal</option><option value="1.2">Fast</option></select>
+    </div>
+    <div class="read" id="readText">
+      <p>Three millilitres of vinegar were added to a 250 mL beaker.</p>
+      <p>The colour of the solution changed from clear to pale pink after 30 seconds.</p>
+      <p>The density of the corn syrup was 1.4 grams per cubic centimetre.</p>
+    </div>
+    <div class="row"><button id="speakBtn">🔊 Read this aloud</button><span id="speakStatus" class="small"></span></div>
+    <p class="small">Did you hear it, and did each sentence light up while it was read? <span class="row" style="display:inline-flex;margin:0">
+      <button class="secondary" data-heard="yes">Yes</button><button class="secondary" data-heard="no">No</button></span> <span id="heardStatus" class="small"></span></p>
+    <p class="small muted" id="voiceInfo"></p>
+  </div>
+
+  <div class="card">
+    <h2><span class="step">5</span> Copy my results</h2>
+    <textarea id="results" readonly aria-label="Test results"></textarea>
+    <div class="row"><button id="copyBtn">Copy my results</button><span id="copyStatus" class="small"></span></div>
+  </div>
+
+  <p class="small muted">Fun Lab Reports · Safari test v0.1</p>
+</main>
+<div class="stopbar" id="stopbar" hidden><button id="stopBtn">■ Stop reading</button></div>
+
+<script>
+(function(){
+"use strict";
+var VERSION = "test-0.1";
+var LS_KEY = "funlab.test.visits";
+var LS_NOTE = "funlab.test.note";
+var DB_NAME = "funlab-test", DB_VER = 1;
+var state = { idbOk:false, lsOk:false, idbVisits:[], lsVisits:[], idbNote:null, lsNote:null,
+  photoBytes:0, photoOk:false, persisted:null, persistAsked:null, quota:"", voices:[], chosenVoice:"",
+  heard:null, spoke:null, errors:[] };
+
+window.addEventListener("error", function(e){ state.errors.push(String(e.message)); renderResults(); });
+
+function $(id){ return document.getElementById(id); }
+function fmt(t){ try{ return new Date(t).toLocaleString("en-CA",{dateStyle:"medium",timeStyle:"short"}); }catch(e){ return String(t); } }
+function pill(cls, txt){ return '<span class="pill '+cls+'">'+txt+'</span>'; }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+
+/* ---------- simple storage (localStorage) ---------- */
+function lsGet(k){ try{ return window.localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ window.localStorage.setItem(k,v); return true; }catch(e){ return false; } }
+
+/* ---------- database (IndexedDB) ---------- */
+function openDB(){
+  return new Promise(function(res, rej){
+    var req;
+    try{ req = indexedDB.open(DB_NAME, DB_VER); }catch(e){ rej(e); return; }
+    req.onupgradeneeded = function(){
+      var db = req.result;
+      if(!db.objectStoreNames.contains("visits")) db.createObjectStore("visits",{autoIncrement:true});
+      if(!db.objectStoreNames.contains("kv")) db.createObjectStore("kv");
+    };
+    req.onsuccess = function(){ res(req.result); };
+    req.onerror = function(){ rej(req.error); };
+  });
+}
+function tx(db, store, mode, fn){
+  return new Promise(function(res, rej){
+    var t = db.transaction(store, mode), s = t.objectStore(store), out;
+    out = fn(s);
+    t.oncomplete = function(){ res(out && out.result !== undefined ? out.result : undefined); };
+    t.onerror = function(){ rej(t.error); };
+    t.onabort = function(){ rej(t.error); };
+  });
+}
+var dbP = openDB();
+
+function loadAll(){
+  // simple storage
+  var raw = lsGet(LS_KEY), arr = [];
+  try{ arr = raw ? JSON.parse(raw) : []; }catch(e){ arr = []; }
+  var visit = { t: Date.now(), page: location.protocol };
+  arr.push(visit);
+  state.lsOk = lsSet(LS_KEY, JSON.stringify(arr));
+  state.lsVisits = arr;
+  try{ state.lsNote = JSON.parse(lsGet(LS_NOTE) || "null"); }catch(e){ state.lsNote = null; }
+
+  return dbP.then(function(db){
+    return tx(db,"visits","readwrite",function(s){ s.add(visit); })
+      .then(function(){ return tx(db,"visits","readonly",function(s){ return s.getAll(); }); })
+      .then(function(all){ state.idbVisits = all || []; })
+      .then(function(){ return tx(db,"kv","readonly",function(s){ return s.get("note"); }); })
+      .then(function(n){ state.idbNote = n || null; })
+      .then(function(){ return tx(db,"kv","readonly",function(s){ return s.get("photo"); }); })
+      .then(function(p){
+        state.idbOk = true;
+        if(p && p.blob){ state.photoBytes = p.blob.size; state.photoOk = true;
+          var url = URL.createObjectURL(p.blob); $("savedPhoto").src = url; $("savedPhoto").hidden = false; }
+      });
+  }).catch(function(e){ state.idbOk = false; state.errors.push("Database: "+(e && e.message || e)); });
+}
+
+function renderSaved(){
+  var parts = [];
+  var hadEarlier = state.lsVisits.length > 1 || state.idbVisits.length > 1;
+  if(!state.idbOk) parts.push(pill("bad","Database not working"));
+  if(!state.lsOk) parts.push(pill("bad","Simple storage not working"));
+  var note = state.idbNote || state.lsNote;
+  if(!hadEarlier && !note){
+    parts.push(pill("warn","First visit: nothing saved yet"));
+  } else if(note){
+    parts.push(pill("ok","Saved work found"));
+  } else {
+    parts.push(pill("warn","Earlier visits found, but no saved note yet"));
+  }
+  // compare counts: if one store lost history the other kept, Safari cleared something
+  if(state.idbOk && state.lsOk && Math.abs(state.idbVisits.length - state.lsVisits.length) > 0){
+    parts.push(pill("bad","Some saved data was cleared"));
+  }
+  $("survive").innerHTML = parts.join(" ");
+  $("savedNote").innerHTML = note ? ("Saved note: <b>"+esc(note.text||"(blank)")+"</b> <span class='muted'>(saved "+fmt(note.t)+")</span>") : "";
+  var first = Math.min.apply(null, state.lsVisits.concat(state.idbVisits).map(function(v){return v.t;}));
+  if(isFinite(first)){
+    var days = Math.floor((Date.now()-first)/86400000);
+    $("firstSeen").textContent = "First opened " + fmt(first) + " (" + days + " day" + (days===1?"":"s") + " ago). Visits: " + Math.max(state.idbVisits.length, state.lsVisits.length) + ".";
+  }
+  var rows = [], n = Math.max(state.idbVisits.length, state.lsVisits.length);
+  var all = state.lsVisits.length >= state.idbVisits.length ? state.lsVisits : state.idbVisits;
+  for(var i=0;i<n;i++){
+    rows.push("<tr><td>"+(i+1)+"</td><td>"+fmt(all[i].t)+"</td><td>"+(i<state.idbVisits.length?"✓":"✗")+"</td><td>"+(i<state.lsVisits.length?"✓":"✗")+"</td></tr>");
+  }
+  $("visits").innerHTML = rows.join("");
+}
+
+/* ---------- photo ---------- */
+var chosenFile = null;
+$("photo").addEventListener("change", function(){
+  chosenFile = this.files && this.files[0] || null;
+  $("photoStatus").textContent = chosenFile ? ("Chosen: " + chosenFile.name) : "No photo chosen";
+});
+function shrinkImage(file){
+  return new Promise(function(res, rej){
+    var img = new Image(), url = URL.createObjectURL(file);
+    img.onload = function(){
+      var max = 1200, w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, max/Math.max(w,h));
+      var c = document.createElement("canvas"); c.width = Math.round(w*k); c.height = Math.round(h*k);
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(function(b){ b ? res(b) : rej(new Error("Could not compress photo")); }, "image/jpeg", 0.8);
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); rej(new Error("That file isn't a picture Safari can open")); };
+    img.src = url;
+  });
+}
+function samplePhoto(){
+  return new Promise(function(res){
+    var c = document.createElement("canvas"); c.width = 800; c.height = 600;
+    var g = c.getContext("2d");
+    var grd = g.createLinearGradient(0,0,800,600); grd.addColorStop(0,"#1f7a8c"); grd.addColorStop(1,"#f2a541");
+    g.fillStyle = grd; g.fillRect(0,0,800,600);
+    for(var i=0;i<400;i++){ g.fillStyle = "rgba(255,255,255,"+(Math.random()*0.3)+")";
+      g.beginPath(); g.arc(Math.random()*800, Math.random()*600, Math.random()*18+2, 0, 6.283); g.fill(); }
+    g.fillStyle = "#fff"; g.font = "bold 54px -apple-system,Arial"; g.fillText("Fun Lab Reports", 170, 300);
+    g.font = "28px -apple-system,Arial"; g.fillText("Sample test photo · " + new Date().toLocaleDateString("en-CA"), 190, 350);
+    c.toBlob(function(b){ res(b); }, "image/jpeg", 0.85);
+  });
+}
+$("saveBtn").addEventListener("click", function(){
+  var btn = this; btn.disabled = true; $("saveStatus").textContent = "Saving…";
+  var note = { text: $("note").value.trim() || "Test note", t: Date.now() };
+  lsSet(LS_NOTE, JSON.stringify(note));
+  var photoP = chosenFile ? shrinkImage(chosenFile) : samplePhoto();
+  photoP.then(function(blob){
+    return dbP.then(function(db){
+      return tx(db,"kv","readwrite",function(s){ s.put(note,"note"); s.put({blob:blob, t:Date.now()},"photo"); });
+    }).then(function(){
+      state.idbNote = note; state.lsNote = note; state.photoBytes = blob.size; state.photoOk = true;
+      $("savedPhoto").src = URL.createObjectURL(blob); $("savedPhoto").hidden = false;
+      $("saveStatus").innerHTML = pill("ok","Saved") + " Now quit Safari (⌘ + Q) and open this file again.";
+    });
+  }).catch(function(e){
+    $("saveStatus").innerHTML = pill("bad","Didn't save") + " " + esc(e && e.message || e);
+    state.errors.push("Save: " + (e && e.message || e));
+  }).then(function(){ btn.disabled = false; renderSaved(); renderResults(); });
+});
+
+/* ---------- persistence ---------- */
+function checkPersist(){
+  var sm = navigator.storage;
+  if(!sm){ $("persistStatus").innerHTML = pill("warn","Not supported in this browser"); state.persisted = "not supported"; return Promise.resolve(); }
+  var p1 = sm.persisted ? sm.persisted().then(function(v){ state.persisted = v; }) : Promise.resolve();
+  var p2 = sm.estimate ? sm.estimate().then(function(e){
+    state.quota = Math.round((e.usage||0)/1024) + " KB used of about " + Math.round((e.quota||0)/1048576) + " MB";
+    $("quota").textContent = "Space: " + state.quota;
+  }) : Promise.resolve();
+  return Promise.all([p1,p2]).then(function(){
+    if(state.persisted === true) $("persistStatus").innerHTML = pill("ok","Safari will keep this data");
+    else if(state.persisted === false) $("persistStatus").innerHTML = pill("warn","Not kept yet; press the button");
+  }).catch(function(){});
+}
+$("persistBtn").addEventListener("click", function(){
+  if(!(navigator.storage && navigator.storage.persist)){
+    state.persistAsked = "not supported"; $("persistStatus").innerHTML = pill("warn","Safari doesn't offer this here"); renderResults(); return; }
+  navigator.storage.persist().then(function(ok){
+    state.persistAsked = ok ? "granted" : "refused";
+    $("persistStatus").innerHTML = ok ? pill("ok","Safari will keep this data") : pill("warn","Safari said no (backups will matter more)");
+    return checkPersist();
+  }).catch(function(e){ state.persistAsked = "error"; }).then(renderResults);
+});
+
+/* ---------- read-aloud ---------- */
+var synth = window.speechSynthesis;
+function pickDefault(vs){
+  var order = [/en-CA/i, /en-US/i, /en-GB/i, /^en/i];
+  for(var i=0;i<order.length;i++){ for(var j=0;j<vs.length;j++){ if(order[i].test(vs[j].lang) && vs[j].localService!==false) return vs[j]; } }
+  return vs[0] || null;
+}
+function loadVoices(){
+  if(!synth){ $("voiceInfo").textContent = "This browser has no read-aloud."; state.voices = []; renderResults(); return; }
+  var all = synth.getVoices() || [];
+  var en = all.filter(function(v){ return /^en/i.test(v.lang); });
+  state.voices = en.map(function(v){ return v.name + " (" + v.lang + ")"; });
+  var sel = $("voice"), def = pickDefault(en), keep = sel.value;
+  sel.innerHTML = en.map(function(v,i){ return '<option value="'+i+'">'+esc(v.name)+' ('+esc(v.lang)+')</option>'; }).join("");
+  sel._voices = en;
+  if(keep && en[+keep]) sel.value = keep; else if(def) sel.value = String(en.indexOf(def));
+  var ca = en.filter(function(v){ return /en-CA/i.test(v.lang); }).length;
+  $("voiceInfo").textContent = en.length + " English voices found" + (ca ? (", including " + ca + " Canadian English.") : ". No Canadian English voice; another English voice will be used.");
+  renderResults();
+}
+if(synth){ loadVoices(); if("onvoiceschanged" in synth) synth.onvoiceschanged = loadVoices; setTimeout(loadVoices, 800); }
+
+var speaking = false;
+function stopSpeaking(){
+  speaking = false; if(synth) synth.cancel();
+  Array.prototype.forEach.call(document.querySelectorAll("#readText p"), function(p){ p.classList.remove("speaking"); });
+  $("stopbar").hidden = true; $("speakBtn").textContent = "🔊 Read this aloud";
+}
+$("stopBtn").addEventListener("click", stopSpeaking);
+$("speakBtn").addEventListener("click", function(){
+  if(!synth){ $("speakStatus").innerHTML = pill("bad","No read-aloud in this browser"); return; }
+  if(speaking){ stopSpeaking(); return; }
+  synth.cancel();
+  var ps = Array.prototype.slice.call(document.querySelectorAll("#readText p"));
+  var sel = $("voice"), v = sel._voices && sel._voices[+sel.value];
+  state.chosenVoice = v ? (v.name + " (" + v.lang + ")") : "default";
+  speaking = true; $("stopbar").hidden = false; this.textContent = "■ Stop";
+  var i = 0, started = false;
+  (function next(){
+    ps.forEach(function(p){ p.classList.remove("speaking"); });
+    if(!speaking || i >= ps.length){ if(speaking){ state.spoke = started ? "finished" : "no sound events"; } stopSpeaking(); renderResults(); return; }
+    var p = ps[i++], u = new SpeechSynthesisUtterance(p.textContent);
+    if(v) u.voice = v; u.lang = v ? v.lang : "en-CA"; u.rate = +$("rate").value;
+    u.onstart = function(){ started = true; p.classList.add("speaking"); };
+    u.onend = function(){ next(); };
+    u.onerror = function(e){ state.spoke = "error: " + (e.error||"unknown"); stopSpeaking(); renderResults(); };
+    synth.speak(u);
+  })();
+});
+Array.prototype.forEach.call(document.querySelectorAll("[data-heard]"), function(b){
+  b.addEventListener("click", function(){ state.heard = this.getAttribute("data-heard");
+    $("heardStatus").innerHTML = state.heard === "yes" ? pill("ok","Thanks!") : pill("warn","Noted. Check the Mac's volume and try another voice."); renderResults(); });
+});
+
+/* ---------- results ---------- */
+function browserName(){
+  var ua = navigator.userAgent;
+  var m = ua.match(/Version\/([\d.]+).*Safari/); if(m && !/Chrome|CriOS|Edg/.test(ua)) return "Safari " + m[1];
+  m = ua.match(/Chrome\/([\d.]+)/); if(m) return "Chrome " + m[1];
+  return ua;
+}
+function renderResults(){
+  var note = state.idbNote || state.lsNote;
+  var first = Math.min.apply(null, state.lsVisits.concat(state.idbVisits).map(function(v){return v.t;}));
+  var lines = [
+    "FUN LAB REPORTS – SAFARI TEST RESULTS (" + VERSION + ")",
+    "Date: " + fmt(Date.now()),
+    "Browser: " + browserName() + " · " + (navigator.platform || ""),
+    "Opened as: " + (location.protocol === "file:" ? "local file" : location.protocol.replace(":","") + " page"),
+    "First opened: " + (isFinite(first) ? fmt(first) + " (" + Math.floor((Date.now()-first)/86400000) + " days ago)" : "now"),
+    "Visits recorded: database " + state.idbVisits.length + ", simple storage " + state.lsVisits.length,
+    "Database working: " + (state.idbOk ? "yes" : "NO"),
+    "Simple storage working: " + (state.lsOk ? "yes" : "NO"),
+    "Saved note found: " + (note ? "yes (\"" + (note.text||"") + "\", saved " + fmt(note.t) + ")" : "no"),
+    "Saved photo found: " + (state.photoOk ? "yes (" + Math.round(state.photoBytes/1024) + " KB)" : "no"),
+    "Keep-data permission: " + (state.persisted === true ? "granted" : state.persisted === false ? "not granted" : (state.persisted || "unknown")) + (state.persistAsked ? " (asked: " + state.persistAsked + ")" : ""),
+    "Space: " + (state.quota || "unknown"),
+    "English voices: " + state.voices.length + (state.voices.some(function(v){return /en-CA/i.test(v);}) ? " (Canadian English available)" : " (no Canadian English)"),
+    "Voice used: " + (state.chosenVoice || "not tested yet") + (state.spoke ? " · " + state.spoke : ""),
+    "Heard it and saw highlighting: " + (state.heard || "not answered"),
+    "Errors: " + (state.errors.length ? state.errors.join(" | ") : "none")
+  ];
+  $("results").value = lines.join("\n");
+}
+$("copyBtn").addEventListener("click", function(){
+  renderResults();
+  var t = $("results").value;
+  function done(){ $("copyStatus").innerHTML = pill("ok","Copied") + " Paste it into a text or email to Riley."; }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(done, function(){ $("results").select(); document.execCommand("copy"); done(); });
+  } else { $("results").select(); document.execCommand("copy"); done(); }
+});
+
+loadAll().then(function(){ renderSaved(); return checkPersist(); }).then(renderResults);
+})();
+</script>
+</body>
+</html>
