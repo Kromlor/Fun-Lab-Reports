@@ -94,6 +94,8 @@ table.dt th input{font-weight:700}
 .photo img{width:100%;height:110px;object-fit:cover;border-radius:8px;display:block}
 .photo input{width:100%;min-height:34px;margin-top:4px;font-size:.85rem}
 svg.graph{width:100%;height:auto;background:var(--bg);border:1px solid var(--line);border-radius:12px}
+.tcard{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:10px;background:var(--soft)}
+.report .tcap{font-weight:700;margin:12px 0 2px;font-size:.95rem}
 .gcard{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:10px;background:var(--soft)}
 .ycheck{display:inline-flex;align-items:center;gap:6px;min-height:36px}
 .ycheck input{width:20px;height:20px}
@@ -140,14 +142,14 @@ footer.ver{max-width:1180px;margin:0 auto;padding:0 16px 30px;color:var(--muted)
   </div>
 </div>
 <main id="app" aria-live="polite"></main>
-<footer class="ver noprint">Fun Lab Reports v0.2 · Apologia Physical Science 4th Ed. · Saskatchewan Science 9 · Your work stays on this computer.</footer>
+<footer class="ver noprint">Fun Lab Reports v0.3 · Apologia Physical Science 4th Ed. · Saskatchewan Science 9 · Your work stays on this computer.</footer>
 <div class="stopbar noprint" id="stopbar" hidden><button class="btn" data-action="stopSpeak">■ Stop reading</button></div>
 <div id="modalRoot"></div>
 
 <script>
 (function(){
 "use strict";
-var APP_VERSION = "0.2";
+var APP_VERSION = "0.3";
 
 /* ===================== Course data ===================== */
 var OUTCOMES = {
@@ -266,7 +268,8 @@ function migrate(d){
   var f=fresh();
   Object.keys(f).forEach(function(k){ if(d[k]===undefined) d[k]=f[k]; });
   Object.keys(f.settings).forEach(function(k){ if(d.settings[k]===undefined) d.settings[k]=f.settings[k]; });
-  Object.keys(d.labs||{}).forEach(function(k){ var r=d.labs[k]; if(r && r.graph && !r.graphs){ r.graphs=[{id:"g_"+uid(),title:"",x:+r.graph.x||0,ys:[r.graph.y==null?1:+r.graph.y],type:r.graph.type||"line",show:!!r.graph.show}]; delete r.graph; } });
+  Object.keys(d.labs||{}).forEach(function(k){ var r=d.labs[k]; if(r && r.table && !r.tables){ r.table.id=r.table.id||"t_"+uid(); r.table.title=r.table.title||""; r.tables=[r.table]; delete r.table; (r.graphs||[]).forEach(function(g){ if(!g.tab) g.tab=r.tables[0].id; }); }
+    if(r && r.graph && !r.graphs){ r.graphs=[{id:"g_"+uid(),title:"",x:+r.graph.x||0,ys:[r.graph.y==null?1:+r.graph.y],type:r.graph.type||"line",show:!!r.graph.show}]; delete r.graph; } });
   d.v=1; return d;
 }
 var saveTimer=null;
@@ -319,7 +322,7 @@ function ordOf(l){ if(l.ord) return l.ord; var x=parseFloat(l.id.split(".")[1]);
 function cmpId(a,b){ var pa=a.split("."),pb=b.split("."); var x=parseFloat(pa[1]),y=parseFloat(pb[1]); if(isNaN(x)) x=50; if(isNaN(y)) y=50; if(x!==y) return x-y; return a<b?-1:a>b?1:0; }
 function labName(l){ return (l.id.indexOf(".Y")>0?"":"Experiment "+l.id+": ")+l.title; }
 function labDef(id){ var l=allLabs().filter(function(x){return x.id===id;}); return l[0]||null; }
-function rec(id){ if(!data.labs[id]) data.labs[id]={status:"not",date:"",sections:{},table:null,graphs:null,photos:[],calc:{},comment:"",reviewed:false,finished:"",elsewhere:null}; return data.labs[id]; }
+function rec(id){ if(!data.labs[id]) data.labs[id]={status:"not",date:"",sections:{},tables:null,graphs:null,photos:[],calc:{},comment:"",reviewed:false,finished:"",elsewhere:null}; return data.labs[id]; }
 function hasRec(id){ return !!data.labs[id]; }
 function statusOf(id){ return hasRec(id)?data.labs[id].status:"not"; }
 function statusPill(s,r){
@@ -506,21 +509,39 @@ function dataTools(id){
   var r=rec(id);
   return '<div id="dataTools" style="margin-top:10px">'+tableHTML(id)+graphPanel(id)+calcHTML(id)+photosHTML(id)+'</div>';
 }
-function ensureTable(r){ if(!r.table) r.table={cols:[{name:"Trial",unit:""},{name:"",unit:""}],rows:[["1",""],["2",""],["3",""]]}; return r.table; }
-function tableHTML(id){
-  var t=ensureTable(rec(id));
-  var h='<h3 style="margin-top:6px">Data table</h3><p class="small muted">Name each column and pick its unit. Type numbers in the cells.</p><div class="tablewrap"><table class="dt"><thead><tr>';
-  t.cols.forEach(function(c,ci){ h+='<th><input type="text" aria-label="Column '+(ci+1)+' name" data-tcol="'+ci+'" value="'+esc(c.name)+'" placeholder="Column name"><select class="unit" aria-label="Column '+(ci+1)+' unit" data-tunit="'+ci+'">'+UNITS.map(function(u){return '<option'+(u===c.unit?" selected":"")+' value="'+esc(u)+'">'+(u||"(no unit)")+'</option>';}).join("")+'</select></th>'; });
+var MAX_TABLES=4;
+function blankTable(){ return {id:"t_"+uid(),title:"",cols:[{name:"Trial",unit:""},{name:"",unit:""}],rows:[["1",""],["2",""],["3",""]]}; }
+function tablesOf(r){
+  if(!r.tables){ var t=r.table||blankTable(); if(!t.id) t.id="t_"+uid(); if(t.title==null) t.title=""; r.tables=[t]; delete r.table; }
+  if(!r.tables.length) r.tables.push(blankTable());
+  return r.tables;
+}
+function ensureTable(r){ return tablesOf(r)[0]; }
+function tableAt(r,ti){ return tablesOf(r)[ti]||tablesOf(r)[0]; }
+function tableById(r,tid){ var ts=tablesOf(r); for(var i=0;i<ts.length;i++){ if(ts[i].id===tid) return ts[i]; } return null; }
+function tableLabel(t,i){ return "Table "+(i+1)+(t.title&&t.title.trim()?": "+t.title.trim():""); }
+function tableFor(r,g){ var t=g.tab&&tableById(r,g.tab); if(!t){ t=tablesOf(r)[0]; g.tab=t.id; } return t; }
+function tableCard(t,ti,count){
+  var h='<div class="tcard" data-ti="'+ti+'"><div class="row" style="justify-content:space-between"><b>Table '+(ti+1)+'</b>'+(count>1?'<button class="btn ghost small" data-action="delTable" aria-label="Remove table '+(ti+1)+'">Remove</button>':'')+'</div>'+
+    '<div class="row small" style="margin-top:6px"><label style="flex:1 1 260px">Title <input type="text" data-ttitle value="'+esc(t.title)+'" placeholder="e.g. Temperature of hot and cold water" style="width:100%"></label></div>'+
+    '<div class="tablewrap" style="margin-top:6px"><table class="dt" aria-label="'+esc(tableLabel(t,ti))+'"><thead><tr>';
+  t.cols.forEach(function(c,ci){ h+='<th><input type="text" aria-label="Table '+(ti+1)+', column '+(ci+1)+' name" data-tcol="'+ci+'" value="'+esc(c.name)+'" placeholder="Column name"><select class="unit" aria-label="Table '+(ti+1)+', column '+(ci+1)+' unit" data-tunit="'+ci+'">'+UNITS.map(function(u){return '<option'+(u===c.unit?" selected":"")+' value="'+esc(u)+'">'+(u||"(no unit)")+'</option>';}).join("")+'</select></th>'; });
   h+='</tr></thead><tbody>';
-  t.rows.forEach(function(row,ri){ h+='<tr>'; t.cols.forEach(function(c,ci){ h+='<td><input type="text" inputmode="decimal" aria-label="Row '+(ri+1)+', '+esc(c.name||"column "+(ci+1))+'" data-tr="'+ri+'" data-tc="'+ci+'" value="'+esc(row[ci]||"")+'"></td>'; }); h+='</tr>'; });
+  t.rows.forEach(function(row,ri){ h+='<tr>'; t.cols.forEach(function(c,ci){ h+='<td><input type="text" inputmode="decimal" aria-label="Table '+(ti+1)+', row '+(ri+1)+', '+esc(c.name||"column "+(ci+1))+'" data-tr="'+ri+'" data-tc="'+ci+'" value="'+esc(row[ci]||"")+'"></td>'; }); h+='</tr>'; });
   h+='</tbody><tfoot><tr>'+t.cols.map(function(c,ci){ var a=avg(t,ci); return '<td class="small muted">'+(a!==null?"Average: "+a:"")+'</td>'; }).join("")+'</tr></tfoot></table></div>';
-  h+='<div class="row" style="margin-top:8px"><button class="btn ghost small" data-action="addRow">+ Row</button><button class="btn ghost small" data-action="addCol">+ Column</button><button class="btn ghost small" data-action="delRow">− Row</button><button class="btn ghost small" data-action="delCol">− Column</button></div>';
+  h+='<div class="row" style="margin-top:8px"><button class="btn ghost small" data-action="addRow">+ Row</button><button class="btn ghost small" data-action="addCol">+ Column</button><button class="btn ghost small" data-action="delRow">− Row</button><button class="btn ghost small" data-action="delCol">− Column</button></div></div>';
   return h;
+}
+function tableHTML(id){
+  var ts=tablesOf(rec(id));
+  return '<div id="tablesPanel"><h3 style="margin-top:6px">Data tables</h3><p class="small muted">Name each column and pick its unit. Type numbers in the cells. Add another table if the lab measures something different.</p>'+
+    ts.map(function(t,ti){ return tableCard(t,ti,ts.length); }).join("")+
+    (ts.length<MAX_TABLES?'<button class="btn ghost small" style="margin-top:10px" data-action="addTable">+ Add a data table</button>':'<p class="small muted">'+MAX_TABLES+' tables is the limit.</p>')+'</div>';
 }
 function avg(t,ci){ if(ci===0) return null; var vals=t.rows.map(function(r){return num(r[ci]);}).filter(function(x){return !isNaN(x);}); if(vals.length<2) return null; var s=vals.reduce(function(a,b){return a+b;},0)/vals.length; return (Math.round(s*100)/100)+(t.cols[ci].unit?" "+t.cols[ci].unit:""); }
 var SERIES_COL=["#1f7a8c","#c2457a","#c97a12","#3a9a5b","#6a5acd","#8a5a2b"];
 var MAX_GRAPHS=6;
-function newGraph(t){ var y=t&&t.cols.length>1?1:0; return {id:"g_"+uid(),title:"",x:0,ys:[y],type:"line",show:true}; }
+function newGraph(t){ var y=t&&t.cols.length>1?1:0; return {id:"g_"+uid(),title:"",tab:t?t.id:"",x:0,ys:[y],type:"line",show:true}; }
 function fixGraph(g,t){
   var n=t?t.cols.length:2;
   if(!(g.x>=0&&g.x<n)) g.x=0;
@@ -530,22 +551,23 @@ function fixGraph(g,t){
   return g;
 }
 function graphsOf(r){
+  var t0=tablesOf(r)[0];
   if(!r.graphs){
-    var t=ensureTable(r);
-    if(r.graph){ r.graphs=[{id:"g_"+uid(),title:"",x:+r.graph.x||0,ys:[r.graph.y==null?1:+r.graph.y],type:r.graph.type||"line",show:!!r.graph.show}]; }
-    else r.graphs=[newGraph(t)];
+    if(r.graph){ r.graphs=[{id:"g_"+uid(),title:"",tab:t0.id,x:+r.graph.x||0,ys:[r.graph.y==null?1:+r.graph.y],type:r.graph.type||"line",show:!!r.graph.show}]; }
+    else r.graphs=[newGraph(t0)];
     delete r.graph;
   }
-  var t2=ensureTable(r); r.graphs.forEach(function(g){ fixGraph(g,t2); });
+  r.graphs.forEach(function(g){ fixGraph(g,tableFor(r,g)); });
   return r.graphs;
 }
 function colLabel(c,ci){ return c.name||("Column "+(ci+1)); }
-function graphCard(t,g,gi){
+function graphCard(t,g,gi,ts){
   var xopts=t.cols.map(function(c,ci){ return '<option value="'+ci+'"'+(ci===g.x?" selected":"")+'>'+esc(colLabel(c,ci))+'</option>'; }).join("");
   var ychecks=t.cols.map(function(c,ci){ if(ci===g.x) return ""; var k=g.ys.indexOf(ci);
     return '<label class="ycheck"><input type="checkbox" data-g="y" value="'+ci+'"'+(k>=0?" checked":"")+'> <span class="swatch" style="background:'+(k>=0?SERIES_COL[k%SERIES_COL.length]:"transparent")+'"></span>'+esc(colLabel(c,ci))+'</label>'; }).join("");
   return '<div class="gcard" data-gi="'+gi+'"><div class="row" style="justify-content:space-between"><b>Graph '+(gi+1)+'</b><button class="btn ghost small" data-action="delGraph" data-gi="'+gi+'" aria-label="Remove graph '+(gi+1)+'">Remove</button></div>'+
     '<div class="row small" style="margin-top:6px"><label style="flex:1 1 260px">Title <input type="text" data-g="title" value="'+esc(g.title)+'" placeholder="e.g. Temperature of hot and cold water over time" style="width:100%"></label></div>'+
+    (ts&&ts.length>1?'<div class="row small" style="margin-top:6px"><label>Data from: <select data-g="tab">'+ts.map(function(tb,i){ return '<option value="'+esc(tb.id)+'"'+(tb.id===g.tab?" selected":"")+'>'+esc(tableLabel(tb,i))+'</option>'; }).join("")+'</select></label></div>':'')+
     '<div class="row small" style="margin-top:6px"><label>Across the bottom (x): <select data-g="x">'+xopts+'</select></label>'+
     '<label>Type: <select data-g="type"><option value="line"'+(g.type==="line"?" selected":"")+'>Line</option><option value="bar"'+(g.type==="bar"?" selected":"")+'>Bar</option></select></label>'+
     '<label><input type="checkbox" data-g="show"'+(g.show?" checked":"")+'> Put in my report</label></div>'+
@@ -553,9 +575,9 @@ function graphCard(t,g,gi){
     '<div class="graphBox" style="margin-top:8px">'+graphSVG(t,g)+'</div></div>';
 }
 function graphPanel(id){
-  var r=rec(id), t=ensureTable(r), gs=graphsOf(r);
+  var r=rec(id), ts=tablesOf(r), gs=graphsOf(r);
   return '<div id="graphsPanel"><h3 style="margin-top:16px">Graphs</h3><p class="small muted">Add a graph for each thing you want to show. To compare columns (like hot and cold water), tick more than one under "Up the side."</p>'+
-    gs.map(function(g,gi){ return graphCard(t,g,gi); }).join("")+
+    gs.map(function(g,gi){ return graphCard(tableFor(r,g),g,gi,ts); }).join("")+
     (gs.length<MAX_GRAPHS?'<button class="btn ghost small" style="margin-top:10px" data-action="addGraph">+ Add a graph</button>':'<p class="small muted">'+MAX_GRAPHS+' graphs is the limit.</p>')+'</div>';
 }
 function markerSVG(k,x,y,col,tip){
@@ -669,7 +691,7 @@ function renderLab(id){
   fillPhotos(app);
 }
 function reportHTML(id,forPrint){
-  var d=labDef(id), r=rec(id), secs=sectionsFor(), t=r.table;
+  var d=labDef(id), r=rec(id), secs=sectionsFor(), ts=tablesOf(r);
   var h='<div class="report para" id="rep_'+esc(id)+'"><h1>'+esc(labName(d))+'</h1>'+
     '<p class="meta">'+esc(data.student)+' · '+esc(fmtDate(r.date))+' · Apologia <i>Exploring Creation with Physical Science</i>, 4th ed., Module '+d.m+(d.tags.length?' · Saskatchewan outcomes: '+d.tags.join(", "):'')+'</p>';
   secs.forEach(function(k){
@@ -679,14 +701,17 @@ function reportHTML(id,forPrint){
     if(v) h+=v.split(/\n{2,}/).map(function(p){return '<p class="p">'+esc(p)+'</p>';}).join("");
     else if(k!=="data") h+='<p class="p" style="color:#999">(not written yet)</p>';
     if(k==="data"){
-      var hasT=t && t.rows.some(function(row){ return row.some(function(c,ci){ return ci>0 && String(c||"").trim(); }); });
-      if(hasT){
+      var filled=function(t){ return t.rows.some(function(row){ return row.some(function(c,ci){ return ci>0 && String(c||"").trim(); }); }); };
+      var hasT=ts.some(filled), showCap=ts.filter(filled).length>1;
+      ts.forEach(function(t,ti){
+        if(!filled(t)) return;
         var keep=t.cols.map(function(c,ci){ return ci===0 || !!c.name.trim() || t.rows.some(function(row){ return String(row[ci]||"").trim(); }); });
         var useRows=t.rows.filter(function(row){ return row.some(function(c,ci){ return ci>0 && keep[ci] && String(c||"").trim(); }); });
+        if(showCap || (t.title&&t.title.trim())) h+='<div class="tcap">'+esc(tableLabel(t,ti))+'</div>';
         h+='<table><thead><tr>'+t.cols.map(function(c,ci){ return keep[ci]?'<th>'+esc(c.name)+(c.unit?" ("+esc(c.unit)+")":"")+'</th>':""; }).join("")+'</tr></thead><tbody>'+
           useRows.map(function(row){ return '<tr>'+t.cols.map(function(c,ci){ return keep[ci]?'<td>'+esc(row[ci]||"")+'</td>':""; }).join("")+'</tr>'; }).join("")+'</tbody></table>';
-        graphsOf(r).filter(function(g){ return g.show; }).forEach(function(g,gi){ h+='<div class="repgraph">'+graphSVG(t,g).replace(/<p class="small graphtips[\s\S]*$/,"")+'<div class="cap">Figure '+(gi+1)+(g.title&&g.title.trim()?': '+esc(g.title.trim()):'')+'</div></div>'; });
-      }
+      });
+      if(hasT) graphsOf(r).filter(function(g){ return g.show && filled(tableFor(r,g)); }).forEach(function(g,gi){ h+='<div class="repgraph">'+graphSVG(tableFor(r,g),g).replace(/<p class="small graphtips[\s\S]*$/,"")+'<div class="cap">Figure '+(gi+1)+(g.title&&g.title.trim()?': '+esc(g.title.trim()):'')+'</div></div>'; });
       if(r.photos.length) h+='<div>'+r.photos.map(function(p){ return '<figure><img data-photo="'+esc(p.id)+'" alt="'+esc(p.caption||"Lab photo")+'"><figcaption>'+esc(p.caption||"")+'</figcaption></figure>'; }).join("")+'</div>';
       if(!v && !hasT && !r.photos.length) h+='<p class="p" style="color:#999">(no data yet)</p>';
     }
@@ -785,8 +810,13 @@ document.addEventListener("click",function(e){
     if(miss.length){ modal('<h2>Almost there</h2><p>These parts are still empty: <b>'+miss.map(function(k){return esc(SECTIONS[k].label);}).join(", ")+'</b>.</p><p>Finish them first, or mark it finished anyway?</p><div class="row"><button class="btn" data-action="closeModal">Keep working</button><button class="btn ghost" data-action="finishAnyway" data-id="'+esc(id)+'">Finished anyway</button></div>'); return; }
     doFinish(id); return; }
   if(a==="finishAnyway"){ closeModal(); doFinish(id); return; }
-  if(a==="addRow"||a==="addCol"||a==="delRow"||a==="delCol"){ tableOp(a); return; }
-  if(a==="addGraph"){ var lg=currentLabId(), gl=graphsOf(rec(lg)); if(gl.length>=MAX_GRAPHS) return; gl.push(newGraph(ensureTable(rec(lg)))); touch(lg); refreshGraph(); var cards=$all(".gcard"); if(cards.length){ cards[cards.length-1].scrollIntoView({block:"nearest"}); var ti=cards[cards.length-1].querySelector('[data-g=title]'); if(ti) ti.focus(); } return; }
+  if(a==="addRow"||a==="addCol"||a==="delRow"||a==="delCol"){ var tc=b.closest("[data-ti]"); tableOp(a, tc?+tc.getAttribute("data-ti"):0); return; }
+  if(a==="addTable"){ var lt=currentLabId(), tl=tablesOf(rec(lt)); if(tl.length>=MAX_TABLES) return; tl.push(blankTable()); touch(lt); refreshData(); var tcs=$all(".tcard"); if(tcs.length){ var last=tcs[tcs.length-1]; last.scrollIntoView({block:"nearest"}); var tt=last.querySelector("[data-ttitle]"); if(tt) tt.focus(); } return; }
+  if(a==="delTable"){ var lx=currentLabId(), rx=rec(lx), tx=tablesOf(rx), ti=+b.closest("[data-ti]").getAttribute("data-ti"), dead=tx[ti]; if(!dead||tx.length<=1) return;
+    var used=graphsOf(rx).filter(function(g){ return g.tab===dead.id; }).length;
+    if(!confirm("Remove Table "+(ti+1)+" and everything typed in it?"+(used?" The "+used+" graph"+(used===1?"":"s")+" made from it will be removed too.":""))) return;
+    rx.graphs=rx.graphs.filter(function(g){ return g.tab!==dead.id; }); tx.splice(ti,1); touch(lx); refreshData(); return; }
+  if(a==="addGraph"){ var lg=currentLabId(), gl=graphsOf(rec(lg)); if(gl.length>=MAX_GRAPHS) return; gl.push(newGraph(tablesOf(rec(lg))[tablesOf(rec(lg)).length-1])); touch(lg); refreshGraph(); var cards=$all(".gcard"); if(cards.length){ cards[cards.length-1].scrollIntoView({block:"nearest"}); var ti=cards[cards.length-1].querySelector('[data-g=title]'); if(ti) ti.focus(); } return; }
   if(a==="delGraph"){ var ld=currentLabId(), gd=graphsOf(rec(ld)), gi=+b.getAttribute("data-gi"); if(!gd[gi]) return; if(!confirm("Remove Graph "+(gi+1)+"? The data table stays the same.")) return; gd.splice(gi,1); touch(ld); refreshGraph(); return; }
   if(a==="calcInsert"){ var lid=currentLabId(), c=rec(lid).calc||{}, out=calcOut(c); if(/^Density =/.test(out)){ var ta=$("#ta_data"); ta.value=(ta.value?ta.value.replace(/\s+$/,"")+"\n":"")+out.replace(/ \(.*\)$/,"")+"."; onSection(ta); toast("Added to your data."); } else toast(out); return; }
   if(a==="delPhoto"){ var lr=rec(currentLabId()), i=+b.getAttribute("data-i"), p=lr.photos[i]; if(!p) return; lr.photos.splice(i,1); idbDel("photos",p.id); save(); refreshData(); return; }
@@ -809,8 +839,9 @@ document.addEventListener("input",function(e){
   var t=e.target;
   if(t.matches("textarea[data-sec]")) return onSection(t);
   var lid=currentLabId();
-  if(t.matches("[data-tcol]")){ var tb=ensureTable(rec(lid)); tb.cols[+t.getAttribute("data-tcol")].name=t.value; touch(lid); refreshGraph(); return; }
-  if(t.matches("[data-tr]")){ var tb2=ensureTable(rec(lid)); tb2.rows[+t.getAttribute("data-tr")][+t.getAttribute("data-tc")]=t.value; touch(lid); refreshGraph(); refreshAvg(); return; }
+  if(t.matches("[data-ttitle]")){ var tt=tableAt(rec(lid),tiOf(t)); tt.title=t.value; touch(lid); $all('select[data-g=tab] option[value="'+cssEsc(tt.id)+'"]').forEach(function(o){ o.textContent=tableLabel(tt,tiOf(t)); }); return; }
+  if(t.matches("[data-tcol]")){ var tb=tableAt(rec(lid),tiOf(t)); tb.cols[+t.getAttribute("data-tcol")].name=t.value; touch(lid); refreshGraph(); return; }
+  if(t.matches("[data-tr]")){ var tb2=tableAt(rec(lid),tiOf(t)); tb2.rows[+t.getAttribute("data-tr")][+t.getAttribute("data-tc")]=t.value; touch(lid); refreshGraph(); refreshAvg(tiOf(t)); return; }
   if(t.matches("[data-calc]")){ var r=rec(lid); r.calc=r.calc||{}; r.calc[t.getAttribute("data-calc")]=t.value; $("#calcOut").textContent=calcOut(r.calc); save(); return; }
   if(t.matches("[data-g=title]")){ var gc2=t.closest("[data-gi]"), g2=graphsOf(rec(lid))[+gc2.getAttribute("data-gi")]; g2.title=t.value; touch(lid); return; }
   if(t.matches("[data-cap]")){ rec(lid).photos[+t.getAttribute("data-cap")].caption=t.value; save(); return; }
@@ -819,9 +850,10 @@ document.addEventListener("input",function(e){
 });
 document.addEventListener("change",function(e){
   var t=e.target, lid=currentLabId();
-  if(t.matches("[data-tunit]")){ ensureTable(rec(lid)).cols[+t.getAttribute("data-tunit")].unit=t.value; touch(lid); refreshGraph(); refreshAvg(); return; }
+  if(t.matches("[data-tunit]")){ tableAt(rec(lid),tiOf(t)).cols[+t.getAttribute("data-tunit")].unit=t.value; touch(lid); refreshGraph(); refreshAvg(tiOf(t)); return; }
   if(t.matches("[data-g]")){ var gc=t.closest("[data-gi]"), gr=graphsOf(rec(lid))[+gc.getAttribute("data-gi")], gk=t.getAttribute("data-g");
-    if(gk==="x"){ gr.x=+t.value; fixGraph(gr,ensureTable(rec(lid))); touch(lid); refreshGraph(); return; }
+    if(gk==="tab"){ gr.tab=t.value; gr.x=0; gr.ys=[]; fixGraph(gr,tableFor(rec(lid),gr)); touch(lid); refreshGraph(); return; }
+    if(gk==="x"){ gr.x=+t.value; fixGraph(gr,tableFor(rec(lid),gr)); touch(lid); refreshGraph(); return; }
     if(gk==="y"){ var ci=+t.value; if(t.checked){ if(gr.ys.indexOf(ci)<0) gr.ys.push(ci); } else { if(gr.ys.length<=1){ t.checked=true; toast("A graph needs at least one column up the side."); return; } gr.ys=gr.ys.filter(function(c){ return c!==ci; }); } touch(lid); refreshGraph(); return; }
     if(gk==="title") return;
     if(gk==="type"){ gr.type=t.value; } if(gk==="show"){ gr.show=t.checked; } touch(lid); refreshOneGraph(gc,gr); return; }
@@ -849,15 +881,16 @@ function onSection(t){
 function refreshGraph(){ var lid=currentLabId(), p=$("#graphsPanel"); if(!p) return; var ae=document.activeElement, inPanel=ae&&p.contains(ae), sel=inPanel?{gi:ae.closest("[data-gi]")&&ae.closest("[data-gi]").getAttribute("data-gi"),g:ae.getAttribute("data-g"),v:ae.value}:null;
   p.outerHTML=graphPanel(lid);
   if(sel){ var q='[data-gi="'+sel.gi+'"] [data-g="'+sel.g+'"]'+(sel.g==="y"?'[value="'+sel.v+'"]':''), el=$(q); if(el) el.focus(); } }
-function refreshOneGraph(card,g){ var box=card.querySelector(".graphBox"); if(box) box.innerHTML=graphSVG(ensureTable(rec(currentLabId())),g); }
-function refreshAvg(){ var lid=currentLabId(), t=ensureTable(rec(lid)), cells=$all("table.dt tfoot td"); cells.forEach(function(td,ci){ var a=avg(t,ci); td.textContent=a!==null?"Average: "+a:""; }); }
+function tiOf(el){ var c=el.closest("[data-ti]"); return c?+c.getAttribute("data-ti"):0; }
+function refreshOneGraph(card,g){ var box=card.querySelector(".graphBox"); if(box) box.innerHTML=graphSVG(tableFor(rec(currentLabId()),g),g); }
+function refreshAvg(ti){ var lid=currentLabId(), t=tableAt(rec(lid),ti||0), cells=$all('.tcard[data-ti="'+(ti||0)+'"] table.dt tfoot td'); cells.forEach(function(td,ci){ var a=avg(t,ci); td.textContent=a!==null?"Average: "+a:""; }); }
 function refreshData(){ var lid=currentLabId(), box=$("#dataTools"); if(box){ var y=window.scrollY; box.outerHTML=dataTools(lid); fillPhotos(app); window.scrollTo(0,y); } }
-function tableOp(a){
-  var lid=currentLabId(), t=ensureTable(rec(lid));
+function tableOp(a,ti){
+  var lid=currentLabId(), r=rec(lid), t=tableAt(r,ti);
   if(a==="addRow") t.rows.push(t.cols.map(function(c,ci){ return ci===0?String(t.rows.length+1):""; }));
   if(a==="addCol"){ if(t.cols.length>=8){ toast("8 columns is the limit."); return; } t.cols.push({name:"",unit:""}); t.rows.forEach(function(r){ r.push(""); }); }
   if(a==="delRow"){ if(t.rows.length<=1) return; var last=t.rows[t.rows.length-1]; if(last.some(function(c,ci){return ci>0&&String(c).trim();}) && !confirm("The last row has data in it. Remove it?")) return; t.rows.pop(); }
-  if(a==="delCol"){ if(t.cols.length<=2) return; var ci=t.cols.length-1; if(t.rows.some(function(r){return String(r[ci]||"").trim();}) && !confirm("The last column has data in it. Remove it?")) return; t.cols.pop(); t.rows.forEach(function(r){ r.pop(); }); graphsOf(rec(lid)).forEach(function(g){ fixGraph(g,t); }); }
+  if(a==="delCol"){ if(t.cols.length<=2) return; var ci=t.cols.length-1; if(t.rows.some(function(r){return String(r[ci]||"").trim();}) && !confirm("The last column has data in it. Remove it?")) return; t.cols.pop(); t.rows.forEach(function(r){ r.pop(); }); graphsOf(r).forEach(function(g){ if(g.tab===t.id) fixGraph(g,t); }); }
   touch(lid); refreshData();
 }
 function elsewhereModal(id){
