@@ -2,10 +2,10 @@
 
 A lab report app for a homeschooled Grade 9 student in Saskatchewan working through Apologia's *Exploring Creation with Physical Science*, 4th Edition.
 
-**Status:** v0.1. Modules 1–3 have their experiments listed; Modules 4–15 have supplies and safety notes, and experiments can be added in the Home teacher area. Safari test running on the student's MacBook.
+**Status:** v0.2 (multiple graphs, several lines per graph). Modules 1–3 have their experiments listed; Modules 4–15 have supplies and safety notes, and experiments can be added in the Home teacher area. Safari test running on the student's MacBook.
 
 ## Files
-- `fun-lab-reports.html`: the app (v0.1).
+- `fun-lab-reports.html`: the app (v0.2).
 - `fun-lab-reports-safari-test.html`: checks that Safari keeps saved work and photos, and that read-aloud works. Instructions are on the page.
 - `index.html`: front page with links to the app and the test.
 

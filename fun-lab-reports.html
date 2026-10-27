@@ -94,6 +94,13 @@ table.dt th input{font-weight:700}
 .photo img{width:100%;height:110px;object-fit:cover;border-radius:8px;display:block}
 .photo input{width:100%;min-height:34px;margin-top:4px;font-size:.85rem}
 svg.graph{width:100%;height:auto;background:var(--bg);border:1px solid var(--line);border-radius:12px}
+.gcard{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:10px;background:var(--soft)}
+.ycheck{display:inline-flex;align-items:center;gap:6px;min-height:36px}
+.ycheck input{width:20px;height:20px}
+.swatch{display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid var(--line)}
+.report .repgraph{max-width:560px;color:#111;margin:10px 0;break-inside:avoid}
+.report .repgraph svg.graph{background:#fff}
+.report .repgraph .cap{font-size:.9rem;color:#333;font-style:italic}
 .modal{position:fixed;inset:0;background:rgba(10,14,22,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
 .modal .box{background:var(--card);border-radius:18px;max-width:520px;width:100%;padding:18px 20px;max-height:90vh;overflow:auto}
 .stopbar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:40}
@@ -133,14 +140,14 @@ footer.ver{max-width:1180px;margin:0 auto;padding:0 16px 30px;color:var(--muted)
   </div>
 </div>
 <main id="app" aria-live="polite"></main>
-<footer class="ver noprint">Fun Lab Reports v0.1 · Apologia Physical Science 4th Ed. · Saskatchewan Science 9 · Your work stays on this computer.</footer>
+<footer class="ver noprint">Fun Lab Reports v0.2 · Apologia Physical Science 4th Ed. · Saskatchewan Science 9 · Your work stays on this computer.</footer>
 <div class="stopbar noprint" id="stopbar" hidden><button class="btn" data-action="stopSpeak">■ Stop reading</button></div>
 <div id="modalRoot"></div>
 
 <script>
 (function(){
 "use strict";
-var APP_VERSION = "0.1";
+var APP_VERSION = "0.2";
 
 /* ===================== Course data ===================== */
 var OUTCOMES = {
@@ -259,6 +266,7 @@ function migrate(d){
   var f=fresh();
   Object.keys(f).forEach(function(k){ if(d[k]===undefined) d[k]=f[k]; });
   Object.keys(f.settings).forEach(function(k){ if(d.settings[k]===undefined) d.settings[k]=f.settings[k]; });
+  Object.keys(d.labs||{}).forEach(function(k){ var r=d.labs[k]; if(r && r.graph && !r.graphs){ r.graphs=[{id:"g_"+uid(),title:"",x:+r.graph.x||0,ys:[r.graph.y==null?1:+r.graph.y],type:r.graph.type||"line",show:!!r.graph.show}]; delete r.graph; } });
   d.v=1; return d;
 }
 var saveTimer=null;
@@ -311,7 +319,7 @@ function ordOf(l){ if(l.ord) return l.ord; var x=parseFloat(l.id.split(".")[1]);
 function cmpId(a,b){ var pa=a.split("."),pb=b.split("."); var x=parseFloat(pa[1]),y=parseFloat(pb[1]); if(isNaN(x)) x=50; if(isNaN(y)) y=50; if(x!==y) return x-y; return a<b?-1:a>b?1:0; }
 function labName(l){ return (l.id.indexOf(".Y")>0?"":"Experiment "+l.id+": ")+l.title; }
 function labDef(id){ var l=allLabs().filter(function(x){return x.id===id;}); return l[0]||null; }
-function rec(id){ if(!data.labs[id]) data.labs[id]={status:"not",date:"",sections:{},table:null,graph:{x:0,y:1,type:"line"},photos:[],calc:{},comment:"",reviewed:false,finished:"",elsewhere:null}; return data.labs[id]; }
+function rec(id){ if(!data.labs[id]) data.labs[id]={status:"not",date:"",sections:{},table:null,graphs:null,photos:[],calc:{},comment:"",reviewed:false,finished:"",elsewhere:null}; return data.labs[id]; }
 function hasRec(id){ return !!data.labs[id]; }
 function statusOf(id){ return hasRec(id)?data.labs[id].status:"not"; }
 function statusPill(s,r){
@@ -510,44 +518,108 @@ function tableHTML(id){
   return h;
 }
 function avg(t,ci){ if(ci===0) return null; var vals=t.rows.map(function(r){return num(r[ci]);}).filter(function(x){return !isNaN(x);}); if(vals.length<2) return null; var s=vals.reduce(function(a,b){return a+b;},0)/vals.length; return (Math.round(s*100)/100)+(t.cols[ci].unit?" "+t.cols[ci].unit:""); }
+var SERIES_COL=["#1f7a8c","#c2457a","#c97a12","#3a9a5b","#6a5acd","#8a5a2b"];
+var MAX_GRAPHS=6;
+function newGraph(t){ var y=t&&t.cols.length>1?1:0; return {id:"g_"+uid(),title:"",x:0,ys:[y],type:"line",show:true}; }
+function fixGraph(g,t){
+  var n=t?t.cols.length:2;
+  if(!(g.x>=0&&g.x<n)) g.x=0;
+  g.ys=(g.ys||[]).map(Number).filter(function(c,i,a){ return c>=0&&c<n&&c!==g.x&&a.indexOf(c)===i; });
+  if(!g.ys.length && n>1) g.ys=[g.x===0?1:0];
+  if(g.type!=="bar") g.type="line";
+  return g;
+}
+function graphsOf(r){
+  if(!r.graphs){
+    var t=ensureTable(r);
+    if(r.graph){ r.graphs=[{id:"g_"+uid(),title:"",x:+r.graph.x||0,ys:[r.graph.y==null?1:+r.graph.y],type:r.graph.type||"line",show:!!r.graph.show}]; }
+    else r.graphs=[newGraph(t)];
+    delete r.graph;
+  }
+  var t2=ensureTable(r); r.graphs.forEach(function(g){ fixGraph(g,t2); });
+  return r.graphs;
+}
+function colLabel(c,ci){ return c.name||("Column "+(ci+1)); }
+function graphCard(t,g,gi){
+  var xopts=t.cols.map(function(c,ci){ return '<option value="'+ci+'"'+(ci===g.x?" selected":"")+'>'+esc(colLabel(c,ci))+'</option>'; }).join("");
+  var ychecks=t.cols.map(function(c,ci){ if(ci===g.x) return ""; var k=g.ys.indexOf(ci);
+    return '<label class="ycheck"><input type="checkbox" data-g="y" value="'+ci+'"'+(k>=0?" checked":"")+'> <span class="swatch" style="background:'+(k>=0?SERIES_COL[k%SERIES_COL.length]:"transparent")+'"></span>'+esc(colLabel(c,ci))+'</label>'; }).join("");
+  return '<div class="gcard" data-gi="'+gi+'"><div class="row" style="justify-content:space-between"><b>Graph '+(gi+1)+'</b><button class="btn ghost small" data-action="delGraph" data-gi="'+gi+'" aria-label="Remove graph '+(gi+1)+'">Remove</button></div>'+
+    '<div class="row small" style="margin-top:6px"><label style="flex:1 1 260px">Title <input type="text" data-g="title" value="'+esc(g.title)+'" placeholder="e.g. Temperature of hot and cold water over time" style="width:100%"></label></div>'+
+    '<div class="row small" style="margin-top:6px"><label>Across the bottom (x): <select data-g="x">'+xopts+'</select></label>'+
+    '<label>Type: <select data-g="type"><option value="line"'+(g.type==="line"?" selected":"")+'>Line</option><option value="bar"'+(g.type==="bar"?" selected":"")+'>Bar</option></select></label>'+
+    '<label><input type="checkbox" data-g="show"'+(g.show?" checked":"")+'> Put in my report</label></div>'+
+    '<div class="small" style="margin-top:6px"><span>Up the side (y). Tick one, or more to compare them:</span><div class="row ychecks" style="gap:4px 14px;margin-top:2px">'+ychecks+'</div></div>'+
+    '<div class="graphBox" style="margin-top:8px">'+graphSVG(t,g)+'</div></div>';
+}
 function graphPanel(id){
-  var r=rec(id), t=ensureTable(r), g=r.graph||{x:0,y:1,type:"line"};
-  var opts=function(sel){ return t.cols.map(function(c,ci){ return '<option value="'+ci+'"'+(ci===sel?" selected":"")+'>'+esc(c.name||"Column "+(ci+1))+'</option>'; }).join(""); };
-  return '<h3 style="margin-top:16px">Graph</h3><div class="row small"><label>Across the bottom (x): <select data-graph="x">'+opts(g.x)+'</select></label><label>Up the side (y): <select data-graph="y">'+opts(g.y)+'</select></label>'+
-    '<label>Type: <select data-graph="type"><option value="line"'+(g.type==="line"?" selected":"")+'>Line</option><option value="bar"'+(g.type==="bar"?" selected":"")+'>Bar</option></select></label>'+
-    '<label><input type="checkbox" data-graph="show"'+(g.show?" checked":"")+'> Put the graph in my report</label></div><div id="graphBox" style="margin-top:8px">'+graphSVG(t,g)+'</div>';
+  var r=rec(id), t=ensureTable(r), gs=graphsOf(r);
+  return '<div id="graphsPanel"><h3 style="margin-top:16px">Graphs</h3><p class="small muted">Add a graph for each thing you want to show. To compare columns (like hot and cold water), tick more than one under "Up the side."</p>'+
+    gs.map(function(g,gi){ return graphCard(t,g,gi); }).join("")+
+    (gs.length<MAX_GRAPHS?'<button class="btn ghost small" style="margin-top:10px" data-action="addGraph">+ Add a graph</button>':'<p class="small muted">'+MAX_GRAPHS+' graphs is the limit.</p>')+'</div>';
+}
+function markerSVG(k,x,y,col,tip){
+  var t='<title>'+esc(tip)+'</title>', s=k%4;
+  if(s===0) return '<circle cx="'+x+'" cy="'+y+'" r="5" fill="'+col+'">'+t+'</circle>';
+  if(s===1) return '<rect x="'+(x-5)+'" y="'+(y-5)+'" width="10" height="10" fill="'+col+'">'+t+'</rect>';
+  if(s===2) return '<polygon points="'+x+','+(y-6)+' '+(x+6)+','+(y+5)+' '+(x-6)+','+(y+5)+'" fill="'+col+'">'+t+'</polygon>';
+  return '<polygon points="'+x+','+(y-6)+' '+(x+6)+','+y+' '+x+','+(y+6)+' '+(x-6)+','+y+'" fill="'+col+'">'+t+'</polygon>';
 }
 function graphSVG(t,g){
-  var xi=+g.x, yi=+g.y; if(!t.cols[xi]||!t.cols[yi]) return '<p class="small muted">Pick two columns.</p>';
-  var pts=t.rows.map(function(r){ return {xr:(r[xi]||"").trim(),x:num(r[xi]),y:num(r[yi])}; }).filter(function(p){ return !isNaN(p.y) && p.xr!==""; });
-  var cx=t.cols[xi], cy=t.cols[yi];
-  var missing=[]; if(!cx.name) missing.push("x column"); if(!cy.name) missing.push("y column");
-  if(pts.length<2) return '<p class="small muted">Type at least 2 rows of numbers to see a graph.</p>';
-  var lx=(cx.name||"?")+(cx.unit?" ("+cx.unit+")":""), ly=(cy.name||"?")+(cy.unit?" ("+cy.unit+")":"");
-  var W=560,H=340,L=64,R=16,T=16,B=56,pw=W-L-R,ph=H-T-B;
-  var ys=pts.map(function(p){return p.y;}), ymin=Math.min(0,Math.min.apply(null,ys)), ymax=Math.max.apply(null,ys); if(ymax===ymin) ymax=ymin+1;
+  var xi=+g.x, cx=t.cols[xi]; if(!cx) return '<p class="small muted">Pick a column for across the bottom.</p>';
+  var ser=g.ys.filter(function(ci){ return t.cols[ci] && ci!==xi; });
+  if(!ser.length) return '<p class="small muted">Tick at least one column under "Up the side."</p>';
+  var rows=t.rows.map(function(r){ return {xr:String(r[xi]||"").trim(),x:num(r[xi]),y:ser.map(function(ci){ return num(r[ci]); })}; })
+    .filter(function(p){ return p.xr!=="" && p.y.some(function(v){ return !isNaN(v); }); });
+  var enough=ser.some(function(ci,k){ return rows.filter(function(p){ return !isNaN(p.y[k]); }).length>=2; });
+  if(!enough) return '<p class="small muted">Type at least 2 rows of numbers to see this graph.</p>';
+  var names=ser.map(function(ci){ return colLabel(t.cols[ci],ci); });
+  var units=ser.map(function(ci){ return t.cols[ci].unit; }), uniq=units.filter(function(u,i){ return units.indexOf(u)===i; });
+  var lx=colLabel(cx,xi)+(cx.unit?" ("+cx.unit+")":"");
+  var ly=ser.length===1?names[0]+(units[0]?" ("+units[0]+")":""):(ser.length===2?names.join(" and "):"Values")+(uniq.length===1&&uniq[0]?" ("+uniq[0]+")":"");
+  var W=560,L=64,R=16,B=56,pw=W-L-R,T=16;
+  // legend layout (only when comparing)
+  var leg=[], lrow=0, lx0=0;
+  if(ser.length>1){ names.forEach(function(nm,k){ var lab=nm.length>22?nm.slice(0,21)+"…":nm, w=34+lab.length*7.2; if(lx0+w>pw && lx0>0){ lrow++; lx0=0; } leg.push({k:k,lab:lab,x:L+lx0,row:lrow}); lx0+=w; }); T=16+(lrow+1)*22; }
+  var H=T+260+B, ph=H-T-B;
+  var all=[]; rows.forEach(function(p){ p.y.forEach(function(v){ if(!isNaN(v)) all.push(v); }); });
+  var ymin=Math.min(0,Math.min.apply(null,all)), ymax=Math.max.apply(null,all); if(ymax===ymin) ymax=ymin+1;
   var step=nice((ymax-ymin)/5); ymax=Math.ceil(ymax/step)*step; ymin=Math.floor(ymin/step)*step;
   var Y=function(v){ return T+ph-(v-ymin)/(ymax-ymin)*ph; };
-  var s='<svg class="graph" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Graph of '+esc(ly)+' against '+esc(lx)+'">';
+  var title=(g.title||"").trim();
+  var s='<svg class="graph" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc((title?title+": ":"")+"Graph of "+names.join(", ")+" against "+lx)+'">';
+  leg.forEach(function(it){ var y=8+it.row*22+8, col=SERIES_COL[it.k%SERIES_COL.length]; s+='<line x1="'+it.x+'" x2="'+(it.x+22)+'" y1="'+y+'" y2="'+y+'" stroke="'+col+'" stroke-width="3"/>'+markerSVG(it.k,it.x+11,y,col,it.lab)+'<text x="'+(it.x+28)+'" y="'+(y+4)+'" font-size="12" fill="currentColor">'+esc(it.lab)+'</text>'; });
   for(var v=ymin; v<=ymax+1e-9; v+=step){ var yy=Y(v); s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yy+'" y2="'+yy+'" stroke="currentColor" stroke-opacity=".12"/><text x="'+(L-6)+'" y="'+(yy+4)+'" text-anchor="end" font-size="12" fill="currentColor">'+fmtN(v)+'</text>'; }
-  var numericX=pts.every(function(p){return !isNaN(p.x);});
+  var numericX=rows.every(function(p){ return !isNaN(p.x); });
   if(g.type==="line" && numericX){
-    pts.sort(function(a,b){return a.x-b.x;});
-    var xs=pts.map(function(p){return p.x;}), xmin=Math.min.apply(null,xs), xmax=Math.max.apply(null,xs); if(xmax===xmin) xmax=xmin+1;
+    var xs=rows.map(function(p){return p.x;}), xmin=Math.min.apply(null,xs), xmax=Math.max.apply(null,xs); if(xmax===xmin) xmax=xmin+1;
     var xstep=nice((xmax-xmin)/5); xmin=Math.floor(xmin/xstep)*xstep; xmax=Math.ceil(xmax/xstep)*xstep;
     var X=function(v){ return L+(v-xmin)/(xmax-xmin)*pw; };
     for(var u=xmin; u<=xmax+1e-9; u+=xstep){ s+='<text x="'+X(u)+'" y="'+(T+ph+18)+'" text-anchor="middle" font-size="12" fill="currentColor">'+fmtN(u)+'</text>'; }
-    s+='<polyline fill="none" stroke="#1f7a8c" stroke-width="3" points="'+pts.map(function(p){return X(p.x)+","+Y(p.y);}).join(" ")+'"/>';
-    pts.forEach(function(p){ s+='<circle cx="'+X(p.x)+'" cy="'+Y(p.y)+'" r="5" fill="#c2457a"><title>'+esc(p.xr)+": "+fmtN(p.y)+'</title></circle>'; });
+    ser.forEach(function(ci,k){
+      var col=SERIES_COL[k%SERIES_COL.length], pts=rows.filter(function(p){ return !isNaN(p.y[k]); }).slice().sort(function(a,b){ return a.x-b.x; });
+      if(pts.length>1) s+='<polyline fill="none" stroke="'+col+'" stroke-width="3"'+(k%2?' stroke-dasharray="7 4"':'')+' points="'+pts.map(function(p){ return X(p.x)+","+Y(p.y[k]); }).join(" ")+'"/>';
+      pts.forEach(function(p){ s+=markerSVG(k,X(p.x),Y(p.y[k]),col,names[k]+" at "+p.xr+": "+fmtN(p.y[k])); });
+    });
   } else {
-    var bw=pw/pts.length;
-    pts.forEach(function(p,i){ var x=L+i*bw+bw*0.15, y=Y(p.y); s+='<rect x="'+x+'" y="'+Math.min(y,Y(0))+'" width="'+(bw*0.7)+'" height="'+Math.abs(Y(0)-y)+'" fill="#1f7a8c" rx="3"><title>'+esc(p.xr)+": "+fmtN(p.y)+'</title></rect><text x="'+(L+i*bw+bw/2)+'" y="'+(T+ph+18)+'" text-anchor="middle" font-size="12" fill="currentColor">'+esc(p.xr.slice(0,12))+'</text>'; });
+    var bw=pw/rows.length, inner=bw*0.8/ser.length;
+    rows.forEach(function(p,i){
+      ser.forEach(function(ci,k){ var v=p.y[k]; if(isNaN(v)) return; var x=L+i*bw+bw*0.1+k*inner, y=Y(v);
+        s+='<rect x="'+x+'" y="'+Math.min(y,Y(0))+'" width="'+Math.max(inner-2,2)+'" height="'+Math.abs(Y(0)-y)+'" fill="'+SERIES_COL[k%SERIES_COL.length]+'" rx="2"><title>'+esc(names[k]+" at "+p.xr+": "+fmtN(v))+'</title></rect>'; });
+      s+='<text x="'+(L+i*bw+bw/2)+'" y="'+(T+ph+18)+'" text-anchor="middle" font-size="12" fill="currentColor">'+esc(p.xr.slice(0,12))+'</text>';
+    });
     if(g.type==="line" && !numericX) s+='<text x="'+(W-R)+'" y="'+(T+12)+'" text-anchor="end" font-size="12" fill="currentColor">(x has words, so this shows as bars)</text>';
   }
   s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(Math.max(ymin,0))+'" y2="'+Y(Math.max(ymin,0))+'" stroke="currentColor"/><line x1="'+L+'" x2="'+L+'" y1="'+T+'" y2="'+(T+ph)+'" stroke="currentColor"/>';
   s+='<text x="'+(L+pw/2)+'" y="'+(H-10)+'" text-anchor="middle" font-size="14" font-weight="700" fill="currentColor">'+esc(lx)+'</text>';
   s+='<text transform="translate(16,'+(T+ph/2)+') rotate(-90)" text-anchor="middle" font-size="14" font-weight="700" fill="currentColor">'+esc(ly)+'</text></svg>';
-  if(missing.length || !cx.unit && xi!==0 || !cy.unit) s+='<p class="small" style="color:var(--warn)">💡 Every graph axis needs a name and a unit. '+(missing.length?"Name the "+missing.join(" and ")+". ":"")+(!cy.unit?"Pick a unit for the y column.":"")+'</p>';
+  var tips=[];
+  if(!cx.name) tips.push("Name the x column.");
+  if(!cx.unit && xi!==0) tips.push("Pick a unit for the x column.");
+  ser.forEach(function(ci){ if(!t.cols[ci].name) tips.push("Name column "+(ci+1)+"."); });
+  if(units.some(function(u){ return !u; })) tips.push("Pick a unit for each y column.");
+  if(uniq.filter(Boolean).length>1) tips.push("These columns use different units ("+uniq.filter(Boolean).join(", ")+"). Columns on one graph should share a unit, so make a separate graph for each.");
+  if(tips.length) s+='<p class="small graphtips" style="color:var(--warn)">💡 '+esc(tips.join(" "))+'</p>';
   return s;
 }
 function nice(x){ if(x<=0) return 1; var e=Math.pow(10,Math.floor(Math.log10(x))), f=x/e; return (f<1.5?1:f<3?2:f<7?5:10)*e; }
@@ -597,7 +669,7 @@ function renderLab(id){
   fillPhotos(app);
 }
 function reportHTML(id,forPrint){
-  var d=labDef(id), r=rec(id), secs=sectionsFor(), t=r.table, g=r.graph||{};
+  var d=labDef(id), r=rec(id), secs=sectionsFor(), t=r.table;
   var h='<div class="report para" id="rep_'+esc(id)+'"><h1>'+esc(labName(d))+'</h1>'+
     '<p class="meta">'+esc(data.student)+' · '+esc(fmtDate(r.date))+' · Apologia <i>Exploring Creation with Physical Science</i>, 4th ed., Module '+d.m+(d.tags.length?' · Saskatchewan outcomes: '+d.tags.join(", "):'')+'</p>';
   secs.forEach(function(k){
@@ -613,7 +685,7 @@ function reportHTML(id,forPrint){
         var useRows=t.rows.filter(function(row){ return row.some(function(c,ci){ return ci>0 && keep[ci] && String(c||"").trim(); }); });
         h+='<table><thead><tr>'+t.cols.map(function(c,ci){ return keep[ci]?'<th>'+esc(c.name)+(c.unit?" ("+esc(c.unit)+")":"")+'</th>':""; }).join("")+'</tr></thead><tbody>'+
           useRows.map(function(row){ return '<tr>'+t.cols.map(function(c,ci){ return keep[ci]?'<td>'+esc(row[ci]||"")+'</td>':""; }).join("")+'</tr>'; }).join("")+'</tbody></table>';
-        if(g.show) h+='<div style="max-width:560px;color:#111">'+graphSVG(t,g).replace(/<p class="small[\s\S]*$/,"")+'</div>';
+        graphsOf(r).filter(function(g){ return g.show; }).forEach(function(g,gi){ h+='<div class="repgraph">'+graphSVG(t,g).replace(/<p class="small graphtips[\s\S]*$/,"")+'<div class="cap">Figure '+(gi+1)+(g.title&&g.title.trim()?': '+esc(g.title.trim()):'')+'</div></div>'; });
       }
       if(r.photos.length) h+='<div>'+r.photos.map(function(p){ return '<figure><img data-photo="'+esc(p.id)+'" alt="'+esc(p.caption||"Lab photo")+'"><figcaption>'+esc(p.caption||"")+'</figcaption></figure>'; }).join("")+'</div>';
       if(!v && !hasT && !r.photos.length) h+='<p class="p" style="color:#999">(no data yet)</p>';
@@ -714,6 +786,8 @@ document.addEventListener("click",function(e){
     doFinish(id); return; }
   if(a==="finishAnyway"){ closeModal(); doFinish(id); return; }
   if(a==="addRow"||a==="addCol"||a==="delRow"||a==="delCol"){ tableOp(a); return; }
+  if(a==="addGraph"){ var lg=currentLabId(), gl=graphsOf(rec(lg)); if(gl.length>=MAX_GRAPHS) return; gl.push(newGraph(ensureTable(rec(lg)))); touch(lg); refreshGraph(); var cards=$all(".gcard"); if(cards.length){ cards[cards.length-1].scrollIntoView({block:"nearest"}); var ti=cards[cards.length-1].querySelector('[data-g=title]'); if(ti) ti.focus(); } return; }
+  if(a==="delGraph"){ var ld=currentLabId(), gd=graphsOf(rec(ld)), gi=+b.getAttribute("data-gi"); if(!gd[gi]) return; if(!confirm("Remove Graph "+(gi+1)+"? The data table stays the same.")) return; gd.splice(gi,1); touch(ld); refreshGraph(); return; }
   if(a==="calcInsert"){ var lid=currentLabId(), c=rec(lid).calc||{}, out=calcOut(c); if(/^Density =/.test(out)){ var ta=$("#ta_data"); ta.value=(ta.value?ta.value.replace(/\s+$/,"")+"\n":"")+out.replace(/ \(.*\)$/,"")+"."; onSection(ta); toast("Added to your data."); } else toast(out); return; }
   if(a==="delPhoto"){ var lr=rec(currentLabId()), i=+b.getAttribute("data-i"), p=lr.photos[i]; if(!p) return; lr.photos.splice(i,1); idbDel("photos",p.id); save(); refreshData(); return; }
   if(a==="readReport"){ var paras=$all("#app .report h1, #app .report h2, #app .report p, #app .report figcaption").map(function(el){ return {text:el.textContent,el:el}; }); speakItems(paras); return; }
@@ -738,6 +812,7 @@ document.addEventListener("input",function(e){
   if(t.matches("[data-tcol]")){ var tb=ensureTable(rec(lid)); tb.cols[+t.getAttribute("data-tcol")].name=t.value; touch(lid); refreshGraph(); return; }
   if(t.matches("[data-tr]")){ var tb2=ensureTable(rec(lid)); tb2.rows[+t.getAttribute("data-tr")][+t.getAttribute("data-tc")]=t.value; touch(lid); refreshGraph(); refreshAvg(); return; }
   if(t.matches("[data-calc]")){ var r=rec(lid); r.calc=r.calc||{}; r.calc[t.getAttribute("data-calc")]=t.value; $("#calcOut").textContent=calcOut(r.calc); save(); return; }
+  if(t.matches("[data-g=title]")){ var gc2=t.closest("[data-gi]"), g2=graphsOf(rec(lid))[+gc2.getAttribute("data-gi")]; g2.title=t.value; touch(lid); return; }
   if(t.matches("[data-cap]")){ rec(lid).photos[+t.getAttribute("data-cap")].caption=t.value; save(); return; }
   if(t.matches("[data-comment]")){ rec(t.getAttribute("data-comment")).comment=t.value; save(); return; }
   if(t.matches("[data-field=date]")){ rec(lid).date=t.value; save(); return; }
@@ -745,7 +820,11 @@ document.addEventListener("input",function(e){
 document.addEventListener("change",function(e){
   var t=e.target, lid=currentLabId();
   if(t.matches("[data-tunit]")){ ensureTable(rec(lid)).cols[+t.getAttribute("data-tunit")].unit=t.value; touch(lid); refreshGraph(); refreshAvg(); return; }
-  if(t.matches("[data-graph]")){ var r=rec(lid); r.graph=r.graph||{x:0,y:1,type:"line"}; var k=t.getAttribute("data-graph"); r.graph[k]=k==="show"?t.checked:(k==="type"?t.value:+t.value); save(); refreshGraph(); return; }
+  if(t.matches("[data-g]")){ var gc=t.closest("[data-gi]"), gr=graphsOf(rec(lid))[+gc.getAttribute("data-gi")], gk=t.getAttribute("data-g");
+    if(gk==="x"){ gr.x=+t.value; fixGraph(gr,ensureTable(rec(lid))); touch(lid); refreshGraph(); return; }
+    if(gk==="y"){ var ci=+t.value; if(t.checked){ if(gr.ys.indexOf(ci)<0) gr.ys.push(ci); } else { if(gr.ys.length<=1){ t.checked=true; toast("A graph needs at least one column up the side."); return; } gr.ys=gr.ys.filter(function(c){ return c!==ci; }); } touch(lid); refreshGraph(); return; }
+    if(gk==="title") return;
+    if(gk==="type"){ gr.type=t.value; } if(gk==="show"){ gr.show=t.checked; } touch(lid); refreshOneGraph(gc,gr); return; }
   if(t.matches("[data-check]")){ var m=t.getAttribute("data-check"); data.checklist[m]=data.checklist[m]||{}; data.checklist[m][t.getAttribute("data-key")]=t.checked; save(); return; }
   if(t.matches("[data-tag]")){ var id=t.getAttribute("data-id"), d=labDef(id), tags=d.tags.slice(), k2=t.getAttribute("data-tag"); if(t.checked){ if(tags.indexOf(k2)<0) tags.push(k2); } else tags=tags.filter(function(x){return x!==k2;}); data.tagEdits[id]=tags; save(); return; }
   if(t.matches("[data-action=addPhoto]")){ var f=t.files&&t.files[0]; if(!f) return; toast("Adding photo…"); var target=lid||t.getAttribute("data-id");
@@ -767,7 +846,10 @@ function onSection(t){
   clearTimeout(hintTimer);
   hintTimer=setTimeout(function(){ var ul=$("#hints_"+k); if(ul) ul.innerHTML=coach(k,t.value).map(function(h){return "<li>"+esc(h)+"</li>";}).join(""); },700);
 }
-function refreshGraph(){ var lid=currentLabId(), box=$("#graphBox"); if(box){ var r=rec(lid); box.innerHTML=graphSVG(ensureTable(r),r.graph||{x:0,y:1,type:"line"}); } }
+function refreshGraph(){ var lid=currentLabId(), p=$("#graphsPanel"); if(!p) return; var ae=document.activeElement, inPanel=ae&&p.contains(ae), sel=inPanel?{gi:ae.closest("[data-gi]")&&ae.closest("[data-gi]").getAttribute("data-gi"),g:ae.getAttribute("data-g"),v:ae.value}:null;
+  p.outerHTML=graphPanel(lid);
+  if(sel){ var q='[data-gi="'+sel.gi+'"] [data-g="'+sel.g+'"]'+(sel.g==="y"?'[value="'+sel.v+'"]':''), el=$(q); if(el) el.focus(); } }
+function refreshOneGraph(card,g){ var box=card.querySelector(".graphBox"); if(box) box.innerHTML=graphSVG(ensureTable(rec(currentLabId())),g); }
 function refreshAvg(){ var lid=currentLabId(), t=ensureTable(rec(lid)), cells=$all("table.dt tfoot td"); cells.forEach(function(td,ci){ var a=avg(t,ci); td.textContent=a!==null?"Average: "+a:""; }); }
 function refreshData(){ var lid=currentLabId(), box=$("#dataTools"); if(box){ var y=window.scrollY; box.outerHTML=dataTools(lid); fillPhotos(app); window.scrollTo(0,y); } }
 function tableOp(a){
@@ -775,7 +857,7 @@ function tableOp(a){
   if(a==="addRow") t.rows.push(t.cols.map(function(c,ci){ return ci===0?String(t.rows.length+1):""; }));
   if(a==="addCol"){ if(t.cols.length>=8){ toast("8 columns is the limit."); return; } t.cols.push({name:"",unit:""}); t.rows.forEach(function(r){ r.push(""); }); }
   if(a==="delRow"){ if(t.rows.length<=1) return; var last=t.rows[t.rows.length-1]; if(last.some(function(c,ci){return ci>0&&String(c).trim();}) && !confirm("The last row has data in it. Remove it?")) return; t.rows.pop(); }
-  if(a==="delCol"){ if(t.cols.length<=2) return; var ci=t.cols.length-1; if(t.rows.some(function(r){return String(r[ci]||"").trim();}) && !confirm("The last column has data in it. Remove it?")) return; t.cols.pop(); t.rows.forEach(function(r){ r.pop(); }); var g=rec(lid).graph; if(g){ if(g.x>=t.cols.length) g.x=0; if(g.y>=t.cols.length) g.y=1; } }
+  if(a==="delCol"){ if(t.cols.length<=2) return; var ci=t.cols.length-1; if(t.rows.some(function(r){return String(r[ci]||"").trim();}) && !confirm("The last column has data in it. Remove it?")) return; t.cols.pop(); t.rows.forEach(function(r){ r.pop(); }); graphsOf(rec(lid)).forEach(function(g){ fixGraph(g,t); }); }
   touch(lid); refreshData();
 }
 function elsewhereModal(id){
